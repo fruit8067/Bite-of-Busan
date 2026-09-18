@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   redis:
     image: redis:7-alpine
@@ -8,18 +6,16 @@ services:
     volumes:
       - redis-data:/data
 
-  # Uncomment only if docs/ARCHITECTURE.md records a decision to introduce
-  # MySQL (Redis is the default store).
-  # mysql:
-  #   image: mysql:8.4
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: changeme
-  #     MYSQL_DATABASE: app
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - mysql-data:/var/lib/mysql
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_DATABASE: busanbite
+    ports:
+      - "3307:3306"  # host 3306 already taken by another local mysqld on this machine
+    volumes:
+      - mysql-data:/var/lib/mysql
 
 volumes:
   redis-data:
-  # mysql-data:
+  mysql-data:

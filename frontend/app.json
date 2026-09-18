@@ -2,6 +2,7 @@
   "expo": {
     "name": "frontend-scaffold",
     "slug": "frontend-scaffold",
+    "scheme": "busanbite",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,6 +21,17 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to scan a menu.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan a menu."
+        }
+      ],
+      "expo-router",
+      "expo-font"
+    ]
   }
 }

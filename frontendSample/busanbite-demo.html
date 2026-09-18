@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부산한입 — 라이브 데모</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Song+Myung&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stage: #0d0a1f;
+    --stage-2: #140d2e;
+    --paper: #fbf8ff;
+    --paper-2: #f1eafb;
+    --ink: #1a1030;
+    --muted: #8b7fa0;
+    --hairline: #e4d9f5;
+    --yellow: #ec008c;
+    --yellow-deep: #003795;
+    --red: #58228f;
+    --teal: #0095d9;
+    --white: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --stage: #08051a; --stage-2: #0d0a1f; }
+  }
+  :root[data-theme="dark"]{ --stage: #08051a; --stage-2: #0d0a1f; }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 18% 8%, rgba(236,0,140,0.18), transparent 42%),
+      radial-gradient(circle at 84% 82%, rgba(0,149,217,0.22), transparent 45%),
+      linear-gradient(180deg, var(--stage) 0%, var(--stage-2) 100%);
+    color: var(--paper);
+    font-family: 'Noto Sans KR', sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 32px 16px 56px;
+    overflow-x:hidden;
+  }
+
+  .brand{ text-align:center; margin-bottom:16px; }
+  .brand h1{
+    font-family:'Song Myung', serif;
+    font-size:clamp(28px, 5vw, 40px);
+    margin:0 0 6px;
+    color: var(--yellow);
+    text-shadow: 0 2px 18px rgba(236,0,140,0.4);
+  }
+  .brand p{ margin:0; font-size:13.5px; color:#b9c2c9; }
+
+  .mode-switch{ display:flex; gap:8px; margin-bottom:14px; }
+  .mode-btn{
+    padding:8px 18px; border-radius:100px;
+    border:1.4px solid rgba(255,255,255,0.2);
+    background:transparent; color:#c9d2d8;
+    font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; transition: all .2s ease;
+  }
+  .mode-btn.active{ background:var(--yellow); color:var(--ink); border-color:var(--yellow); }
+
+  .stepper{ display:flex; gap:10px; margin-bottom:20px; min-height:8px; }
+  .stepper .dot{ width:8px;height:8px;border-radius:50%; background:rgba(255,255,255,0.18); transition: all .35s ease; }
+  .stepper .dot.active{ background:var(--yellow); width:22px; border-radius:5px; }
+  .stepper .dot.done{ background:rgba(236,0,140,0.55); }
+
+  .phone{
+    position:relative;
+    width:380px; max-width:92vw;
+    height:720px; max-height:80vh;
+    background:var(--paper);
+    border-radius:46px;
+    box-shadow: 0 0 0 10px #06090d, 0 0 0 12px #2a2f36, 0 40px 70px -20px rgba(0,0,0,0.65);
+    overflow:hidden;
+    perspective:1400px;
+  }
+  .phone::before{
+    content:""; position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:120px; height:26px; background:#06090d; border-radius:0 0 16px 16px; z-index:20;
+  }
+
+  .screen{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    opacity:0; transform:translateX(24px); pointer-events:none;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .screen.active{ opacity:1; transform:translateX(0); pointer-events:auto; }
+
+  .topbar{ padding:34px 20px 10px; display:flex; align-items:center; justify-content:space-between; }
+  .topbar .label{ font-size:13px; font-weight:700; color:var(--ink); }
+  .topbar .back{ font-size:13px; color:var(--muted); background:none; border:none; cursor:pointer; padding:4px 6px; font-family:inherit; }
+
+  /* SCAN */
+  .scan-frame{ margin:6px 20px 0; flex:1; border-radius:20px; background:#191410; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .scan-frame .corner{ position:absolute; width:26px;height:26px; border:3px solid var(--yellow); }
+  .scan-frame .tl{top:14px;left:14px;border-right:none;border-bottom:none;}
+  .scan-frame .tr{top:14px;right:14px;border-left:none;border-bottom:none;}
+  .scan-frame .bl{bottom:14px;left:14px;border-right:none;border-top:none;}
+  .scan-frame .br{bottom:14px;right:14px;border-left:none;border-top:none;}
+  .menu-board{ width:82%; }
+  .menu-board rect.board{ fill:#2a2018; }
+  .menu-board text{ font-family:'Song Myung', serif; fill:#f2ead9; }
+  .menu-board .price{ font-family:'Noto Sans KR', sans-serif; fill:#d8c9a4; font-size:11px; }
+  .menu-board line{ stroke:#4a3d2c; stroke-width:1; }
+  .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  .flash.go{ animation: flashpop .5s ease; }
+  @keyframes flashpop{ 0%{opacity:0;} 12%{opacity:0.95;} 100%{opacity:0;} }
+  .shutter-wrap{ padding:20px 20px 30px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .shutter-hint{ font-size:12.5px; color:var(--muted); }
+  .shutter{ width:62px;height:62px; border-radius:50%; border:4px solid var(--ink); background:var(--white); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .shutter::after{ content:""; width:46px;height:46px; border-radius:50%; background:var(--red); }
+  .shutter:active{ transform:scale(0.94); }
+
+  /* RESULT */
+  .currency-row{ display:flex; gap:7px; overflow-x:auto; padding:0 20px 10px; }
+  .currency-chip{ flex:0 0 auto; padding:6px 11px; border-radius:100px; border:1.4px solid var(--hairline); background:var(--white); font-size:11.5px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; font-family:inherit; }
+  .currency-chip.active{ background:var(--ink); color:var(--yellow); border-color:var(--ink); }
+
+  .result-scroll{ flex:1; overflow-y:auto; padding:2px 16px 12px; }
+  .analyzing{ text-align:center; padding:56px 20px; color:var(--muted); font-size:13.5px; }
+  .analyzing .spin{ width:30px;height:30px; margin:0 auto 14px; border-radius:50%; border:3px solid var(--hairline); border-top-color:var(--yellow-deep); animation: spin .9s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+
+  .item-card{ background:var(--white); border:1px solid var(--hairline); border-radius:16px; padding:14px 14px 12px; margin-bottom:10px; opacity:0; transform:translateY(10px); animation: rise .5s ease forwards; }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0);} }
+  .item-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .item-names .ko{ font-family:'Song Myung', serif; font-size:19px; color:var(--ink); }
+  .item-names .en{ font-size:11.5px; color:var(--teal); font-weight:600; margin-top:2px; }
+  .item-names .zh{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .item-names .price{ font-size:13px; font-weight:700; color:var(--ink); margin-top:6px; }
+  .item-names .price .sub{ font-size:10.5px; color:var(--muted); font-weight:500; margin-left:4px; }
+
+  .spice{ display:flex; gap:2px; margin-top:6px; }
+  .spice .chili{ font-size:12px; opacity:0.25; }
+  .spice .chili.on{ opacity:1; }
+
+  .tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+  .tag{ font-size:10.5px; padding:3px 8px; border-radius:100px; background:var(--paper-2); color:var(--muted); border:1px solid var(--hairline); }
+
+  .allergy-head{ font-size:11px; color:var(--teal); font-weight:700; margin-top:9px; }
+  .allergy-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px; }
+  .allergy-grid .aitem{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; border-radius:10px; background:var(--paper-2); opacity:0.32; }
+  .allergy-grid .aitem.on{ opacity:1; background:rgba(88,34,143,0.1); border:1px solid rgba(88,34,143,0.35); }
+  .allergy-grid .aitem .ic{ font-size:15px; }
+  .allergy-grid .aitem .lb{ font-size:8.5px; color:var(--ink); text-align:center; line-height:1.2; }
+
+  .howto{ font-size:11.5px; color:#5a4f3d; margin-top:9px; line-height:1.45; padding-top:9px; border-top:1px dashed var(--hairline); }
+  .howto b{ color:var(--ink); }
+
+  .item-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:11px; gap:8px; }
+  .opt-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .less-spicy{ font-size:11.5px; padding:6px 10px; border-radius:100px; border:1.4px solid var(--hairline); background:var(--white); color:var(--muted); cursor:pointer; font-family:inherit; }
+  .less-spicy.on{ border-color:var(--red); background:rgba(88,34,143,0.1); color:var(--red); font-weight:700; }
+  .stepper-qty{ display:flex; align-items:center; gap:10px; }
+  .stepper-qty button{ width:26px;height:26px; border-radius:50%; border:1.4px solid var(--ink); background:var(--white); color:var(--ink); font-size:14px; font-weight:700; cursor:pointer; line-height:1; }
+  .stepper-qty button:disabled{ opacity:0.3; cursor:default; }
+  .stepper-qty .qty{ min-width:14px; text-align:center; font-weight:700; color:var(--ink); }
+
+  .bottom-bar{ padding:12px 16px 22px; border-top:1px solid var(--hairline); background:var(--white); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .bottom-bar .count{ font-size:12.5px; color:var(--muted); }
+  .bottom-bar .count b{ color:var(--ink); }
+  .make-card-btn{ flex:1; max-width:210px; padding:13px 16px; border-radius:100px; border:none; background:var(--ink); color:var(--yellow); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; transition:opacity .2s; }
+  .make-card-btn:disabled{ opacity:0.35; cursor:default; }
+
+  /* ORDER / TALK CARD */
+  .allergy-note-row{ padding:0 20px 12px; }
+
+  .card-stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:10px 22px; }
+  .order-card{
+    width:100%; min-height:340px; position:relative; overflow:hidden;
+    background:
+      radial-gradient(circle at 12% 4%, rgba(255,255,255,0.22), transparent 40%),
+      linear-gradient(155deg, var(--yellow) 0%, var(--yellow-deep) 100%);
+    border-radius:22px; padding:26px 24px 24px; color:var(--paper);
+    box-shadow:0 18px 34px -12px rgba(0,55,149,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform .6s cubic-bezier(.65,0,.35,1); transform-style:preserve-3d;
+  }
+  .order-card.flipped{ transform:rotate(180deg); }
+  .order-card.talk{
+    background:
+      radial-gradient(circle at 12% 4%, rgba(255,255,255,0.18), transparent 40%),
+      linear-gradient(155deg, var(--teal) 0%, var(--red) 100%);
+  }
+  .card-head{ padding-bottom:16px; border-bottom:2px dashed rgba(255,255,255,0.32); margin-bottom:4px; }
+  .order-card .kicker{ font-size:11px; font-weight:800; letter-spacing:1px; opacity:0.78; text-transform:uppercase; }
+  .order-card h2{ font-family:'Song Myung', serif; font-size:25px; margin:5px 0 0; }
+  .recognized{ font-size:12px; opacity:0.85; margin-bottom:2px; }
+  .order-line{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-top:1px solid rgba(255,255,255,0.22); font-size:21px; font-weight:800; }
+  .order-line:first-of-type{ border-top:none; }
+  .order-line .qty-badge{
+    font-size:16px; font-weight:800; background:rgba(255,255,255,0.22);
+    padding:5px 12px; border-radius:100px;
+  }
+  .order-note{ margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+  .order-note.empty{ display:none; }
+  .order-note div{
+    font-size:14px; font-weight:700; background:rgba(255,255,255,0.18);
+    padding:9px 13px; border-radius:12px; line-height:1.4;
+  }
+
+  .card-actions{ padding:16px 22px 26px; display:flex; flex-direction:column; gap:12px; align-items:center; }
+  .flip-btn{
+    width:100%; padding:15px; border-radius:100px; border:none;
+    background:var(--ink); color:var(--yellow); font-weight:700; font-size:14.5px;
+    cursor:pointer; font-family:inherit; box-shadow:0 10px 22px -8px rgba(0,0,0,0.4);
+    transition: transform .15s ease;
+  }
+  .flip-btn:active{ transform:scale(0.97); }
+  .flip-hint{ font-size:11.5px; color:var(--muted); text-align:center; line-height:1.55; }
+  .restart{ font-size:12px; color:var(--muted); background:none; border:none; text-decoration:underline; cursor:pointer; font-family:inherit; }
+
+  /* TALK HOME */
+  .talk-home{ padding:20px 26px 10px; display:flex; flex-direction:column; align-items:center; flex:1; }
+  .talk-home h3{ font-family:'Song Myung', serif; font-size:18px; color:var(--ink); margin:8px 0 6px; text-align:center; }
+  .talk-home .sub{ font-size:11.5px; color:var(--muted); text-align:center; margin-bottom:22px; }
+  .mic-btn{ width:92px;height:92px; border-radius:50%; background:var(--red); border:none; display:flex; align-items:center; justify-content:center; font-size:32px; cursor:pointer; color:#fff; box-shadow:0 10px 26px -8px rgba(88,34,143,0.55); }
+  .mic-btn.listening{ animation:pulse 0.9s ease-in-out infinite; }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(88,34,143,0.45);} 70%{box-shadow:0 0 0 22px rgba(88,34,143,0);} 100%{box-shadow:0 0 0 0 rgba(88,34,143,0);} }
+  .mic-state{ margin-top:14px; font-size:12.5px; color:var(--muted); min-height:18px; }
+  .phrase-chips{ margin-top:22px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .phrase-chip{ padding:9px 14px; border-radius:100px; border:1.4px solid var(--hairline); background:var(--white); font-size:12px; color:var(--ink); cursor:pointer; font-family:inherit; }
+
+  .footnote{ margin-top:20px; font-size:11.5px; color:#7d8894; text-align:center; max-width:340px; line-height:1.6; }
+
+  /* CHAT */
+  .chat-fab{ position:absolute; right:16px; bottom:18px; width:52px;height:52px; border-radius:50%; background:var(--ink); color:var(--yellow); border:none; font-size:21px; cursor:pointer; box-shadow:0 10px 20px -6px rgba(0,0,0,0.5); z-index:30; }
+  .chat-panel{ position:absolute; inset:0; background:var(--paper); z-index:40; display:flex; flex-direction:column; transform:translateY(100%); transition:transform .35s ease; }
+  .chat-panel.open{ transform:translateY(0); }
+  .chat-header{ padding:32px 16px 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline); }
+  .chat-header .title{ font-weight:700; font-size:14px; color:var(--ink); }
+  .chat-header .sub{ font-size:10.5px; color:var(--muted); margin-top:2px; }
+  .chat-close{ background:none; border:none; font-size:18px; color:var(--muted); cursor:pointer; }
+  .chat-body{ flex:1; overflow-y:auto; padding:14px 14px 6px; display:flex; flex-direction:column; gap:10px; }
+  .bubble{ max-width:82%; padding:10px 13px; border-radius:16px; font-size:12.5px; line-height:1.5; }
+  .bubble.ai{ align-self:flex-start; background:var(--white); border:1px solid var(--hairline); color:var(--ink); border-bottom-left-radius:4px; }
+  .bubble.user{ align-self:flex-end; background:var(--ink); color:var(--paper); border-bottom-right-radius:4px; }
+  .typing{ align-self:flex-start; font-size:11px; color:var(--muted); padding-left:4px; }
+  .chat-suggest{ display:flex; gap:6px; overflow-x:auto; padding:8px 14px; }
+  .chat-suggest .sc{ flex:0 0 auto; padding:7px 11px; border-radius:100px; border:1.4px solid var(--hairline); background:var(--white); font-size:11px; color:var(--ink); cursor:pointer; white-space:nowrap; font-family:inherit; }
+  .chat-input-row{ display:flex; gap:8px; padding:10px 14px 18px; border-top:1px solid var(--hairline); }
+  .chat-input-row input{ flex:1; border:1.4px solid var(--hairline); border-radius:100px; padding:10px 14px; font-size:12.5px; font-family:inherit; outline:none; }
+  .chat-input-row button{ background:var(--ink); color:var(--yellow); border:none; border-radius:100px; padding:0 16px; font-weight:700; font-size:12.5px; cursor:pointer; }
+
+  @media (max-width:420px){ .phone{ height:640px; } }
+</style>
+</head>
+<body>
+
+  <div class="brand">
+    <h1>부산한입</h1>
+    <p>찍으면 읽어주고, 보여주면 말해준다 — MVP 라이브 데모</p>
+  </div>
+
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="food">🍚 먹기</button>
+    <button class="mode-btn" data-mode="talk">🗣️ 말하기</button>
+  </div>
+
+  <div class="stepper" id="stepperDots"></div>
+
+  <div class="phone">
+
+    <!-- FOOD: SCAN -->
+    <div class="screen active" id="screen-scan">
+      <div class="topbar"><span class="label" id="scanLabelText">메뉴판 촬영</span><span></span></div>
+      <div class="scan-frame" id="scanFrame">
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <svg class="menu-board" viewBox="0 0 240 300">
+          <rect class="board" x="0" y="0" width="240" height="300" rx="6"/>
+          <text x="120" y="34" font-size="20" text-anchor="middle">자갈치 국밥집</text>
+          <line x1="18" y1="48" x2="222" y2="48"/>
+          <text x="26" y="80" font-size="16">돼지국밥</text>
+          <text class="price" x="214" y="80" text-anchor="end">9,000원</text>
+          <text x="26" y="112" font-size="16">순대국밥</text>
+          <text class="price" x="214" y="112" text-anchor="end">9,000원</text>
+          <text x="26" y="144" font-size="16">물밀면</text>
+          <text class="price" x="214" y="144" text-anchor="end">8,000원</text>
+          <text x="26" y="176" font-size="16">수육(小)</text>
+          <text class="price" x="214" y="176" text-anchor="end">18,000원</text>
+          <line x1="18" y1="196" x2="222" y2="196"/>
+          <text x="120" y="224" font-size="11" text-anchor="middle" fill="#8f7d5c">포장 가능 · 카드 결제 가능</text>
+        </svg>
+        <div class="flash" id="flash"></div>
+      </div>
+      <div class="shutter-wrap">
+        <div class="shutter-hint" id="scanHintText">메뉴판이 프레임 안에 보이면 촬영하세요</div>
+        <button class="shutter" id="shutterBtn" aria-label="촬영"></button>
+      </div>
+    </div>
+
+    <!-- FOOD: RESULT -->
+    <div class="screen" id="screen-result">
+      <div class="topbar">
+        <button class="back" id="backToScan">‹ 다시 찍기</button>
+        <span class="label" id="resultLabelText">분석 결과</span>
+        <span style="width:56px"></span>
+      </div>
+      <div class="currency-row" id="langRow">
+        <button class="currency-chip" data-lang="en">English</button>
+        <button class="currency-chip active" data-lang="ko">한국어</button>
+        <button class="currency-chip" data-lang="zh-Hant">繁體中文</button>
+        <button class="currency-chip" data-lang="zh-Hans">简体中文</button>
+        <button class="currency-chip" data-lang="ja">日本語</button>
+      </div>
+      <div class="currency-row" id="currencyRow">
+        <button class="currency-chip active" data-cur="KRW">₩ 원화</button>
+        <button class="currency-chip" data-cur="TWD">NT$ 대만달러</button>
+        <button class="currency-chip" data-cur="JPY">¥ 엔화</button>
+        <button class="currency-chip" data-cur="CNY">CN¥ 위안화</button>
+        <button class="currency-chip" data-cur="USD">$ 달러</button>
+      </div>
+      <div class="allergy-note-row" id="allergyNoteRow">
+        <button class="less-spicy on" id="soyToggle">🫘 콩 알레르기 있어요 — 전달하기</button>
+      </div>
+      <div class="result-scroll" id="resultScroll">
+        <div class="analyzing" id="analyzing"><div class="spin"></div>메뉴판을 분석하고 있어요…</div>
+      </div>
+      <div class="bottom-bar" id="bottomBar" style="display:none;">
+        <div class="count" id="countText">선택 0개</div>
+        <button class="make-card-btn" id="makeCardBtn" disabled>주문카드 만들기</button>
+      </div>
+    </div>
+
+    <!-- FOOD: ORDER CARD -->
+    <div class="screen" id="screen-card">
+      <div class="topbar">
+        <button class="back" id="backToResult">‹ 메뉴 수정</button>
+        <span class="label" id="cardLabelText">주문카드</span>
+        <span style="width:56px"></span>
+      </div>
+      <div class="card-stage">
+        <div class="order-card" id="orderCard">
+          <div class="card-head">
+            <div class="kicker" id="cardKicker">TO. 사장님</div>
+            <h2 id="cardTitle">사장님, 주문할게요!</h2>
+          </div>
+          <div id="orderLines"></div>
+          <div class="order-note" id="orderNote"></div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="flip-btn" id="flipBtn">사장님께 보여드리기 ↻</button>
+        <div class="flip-hint" id="flipHintText">버튼을 누르면 카드가 180° 돌아가요.<br>휴대폰을 그대로 테이블 건너편으로 돌려서 보여주세요.</div>
+        <button class="restart" id="restartBtn">처음부터 다시 데모하기</button>
+      </div>
+    </div>
+
+    <!-- TALK: HOME -->
+    <div class="screen" id="screen-talk-home">
+      <div class="talk-home">
+        <div class="topbar" style="padding:14px 0 0; width:100%;"><span class="label">말하기</span><span></span></div>
+        <h3>무엇을 전달하고 싶으세요?</h3>
+        <div class="sub">마이크를 누르고 말하면 한국어 카드로 바꿔드려요</div>
+        <button class="mic-btn" id="micBtn" aria-label="말하기">🎙️</button>
+        <div class="mic-state" id="micState"></div>
+        <div class="phrase-chips">
+          <button class="phrase-chip">카드 결제 되나요?</button>
+          <button class="phrase-chip">이거 얼마예요?</button>
+          <button class="phrase-chip">포장 가능해요?</button>
+          <button class="phrase-chip">화장실이 어디예요?</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TALK: CARD -->
+    <div class="screen" id="screen-talk-card">
+      <div class="topbar">
+        <button class="back" id="talkBack">‹ 다시 말하기</button>
+        <span class="label">전달 카드</span>
+        <span style="width:56px"></span>
+      </div>
+      <div class="card-stage">
+        <div class="order-card talk" id="talkCard">
+          <div class="card-head">
+            <div class="kicker">인식된 문장</div>
+            <div class="recognized" id="recognizedText">""</div>
+            <h2 id="talkKo">-</h2>
+          </div>
+          <div class="order-note"><div>이 카드를 상대방에게 보여주세요</div></div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="flip-btn" id="talkFlipBtn">상대방에게 보여드리기 ↻</button>
+        <div class="flip-hint">택시 기사님, 사장님 등 상대방 쪽으로 화면을 돌려서 보여주세요.</div>
+      </div>
+    </div>
+
+    <!-- CHAT FAB + PANEL (works in both modes) -->
+    <button class="chat-fab" id="chatFab" aria-label="AI에게 물어보기">💬</button>
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div>
+          <div class="title">AI에게 물어보기</div>
+          <div class="sub">궁금한 건 뭐든 물어보세요</div>
+        </div>
+        <button class="chat-close" id="chatClose">✕</button>
+      </div>
+      <div class="chat-body" id="chatBody">
+        <div class="bubble ai">안녕하세요! 부산 여행 중 궁금한 게 있으면 물어보세요 🙂</div>
+      </div>
+      <div class="chat-suggest">
+        <button class="sc">이거 얼마나 매워요?</button>
+        <button class="sc">근처 환전소 있어요?</button>
+        <button class="sc">채식 메뉴 있어요?</button>
+        <button class="sc">화장실 어디예요?</button>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요">
+        <button id="chatSend">전송</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footnote">
+    데모용 샘플 메뉴판(자갈치 국밥집)으로 고정된 분석 결과를 보여줍니다.<br>
+    음성인식·AI 챗봇 답변도 데모용으로 미리 구성되어 있어요. 실제 서비스는 실시간 AI가 처리합니다.
+  </div>
+
+<script>
+(function(){
+  const RATES = {
+    KRW:{symbol:'₩', rate:1, decimals:0},
+    TWD:{symbol:'NT$', rate:44, decimals:0},
+    JPY:{symbol:'¥', rate:9.3, decimals:0},
+    CNY:{symbol:'CN¥', rate:192, decimals:0},
+    USD:{symbol:'$', rate:1390, decimals:2},
+  };
+  let currentCurrency = 'KRW';
+
+  const ALLERGENS = [
+    {key:'pork', icon:'🐷', label:'돼지고기'},
+    {key:'shrimp', icon:'🦐', label:'갑각류'},
+    {key:'wheat', icon:'🌾', label:'밀(글루텐)'},
+    {key:'milk', icon:'🥛', label:'우유'},
+    {key:'peanut', icon:'🥜', label:'땅콩'},
+    {key:'soy', icon:'🫘', label:'대두'},
+    {key:'egg', icon:'🥚', label:'계란'},
+    {key:'buckwheat', icon:'🌰', label:'메밀'},
+  ];
+
+  const HOWTO_LABEL = { ko:'먹는 법', en:'How to eat', 'zh-Hant':'吃法', 'zh-Hans':'吃法', ja:'食べ方' };
+  const ALLERGY_HEAD = { ko:'알레르기 정보', en:'Allergens', 'zh-Hant':'過敏原資訊', 'zh-Hans':'过敏原信息', ja:'アレルギー情報' };
+  const ALLERGEN_LABELS = {
+    ko:{pork:'돼지고기', shrimp:'갑각류', wheat:'밀(글루텐)', milk:'우유', peanut:'땅콩', soy:'대두', egg:'계란', buckwheat:'메밀'},
+    en:{pork:'Pork', shrimp:'Shellfish', wheat:'Wheat (gluten)', milk:'Milk', peanut:'Peanut', soy:'Soy', egg:'Egg', buckwheat:'Buckwheat'},
+    'zh-Hant':{pork:'豬肉', shrimp:'甲殼類', wheat:'小麥（麩質）', milk:'牛奶', peanut:'花生', soy:'大豆', egg:'雞蛋', buckwheat:'蕎麥'},
+    'zh-Hans':{pork:'猪肉', shrimp:'甲壳类', wheat:'小麦（麸质）', milk:'牛奶', peanut:'花生', soy:'大豆', egg:'鸡蛋', buckwheat:'荞麦'},
+    ja:{pork:'豚肉', shrimp:'甲殻類', wheat:'小麦（グルテン）', milk:'牛乳', peanut:'ピーナッツ', soy:'大豆', egg:'卵', buckwheat:'そば'},
+  };
+  const OPTION_DEFS = {
+    lessSpicy: {
+      icon:'🌶️', noteKo:'덜 맵게 해주세요',
+      i18n:{
+        ko:{ label:'덜 맵게' },
+        en:{ label:'Less spicy', note:'I\u2019d like it less spicy, please.' },
+        'zh-Hant':{ label:'少辣', note:'我想要少辣一點。' },
+        'zh-Hans':{ label:'少辣', note:'我想要少辣一点。' },
+        ja:{ label:'辛さ控えめ', note:'辛さを控えめにしてください。' },
+      }
+    },
+    lessRice: {
+      icon:'🍚', noteKo:'밥 조금만 주세요',
+      i18n:{
+        ko:{ label:'밥 적게' },
+        en:{ label:'Less rice', note:'Just a little rice, please.' },
+        'zh-Hant':{ label:'飯少一點', note:'請給我少一點飯。' },
+        'zh-Hans':{ label:'饭少一点', note:'请给我少一点饭。' },
+        ja:{ label:'ご飯少なめ', note:'ご飯は少なめでお願いします。' },
+      }
+    },
+    soyAllergy: {
+      icon:'🫘', noteKo:'저는 콩 알러지가 있어요. 콩은 빼주세요.',
+      i18n:{
+        ko:{ label:'콩 알레르기' },
+        en:{ label:'Soy allergy', note:'I have a soy allergy. Please leave out soy.' },
+        'zh-Hant':{ label:'黃豆過敏', note:'我對黃豆過敏，請不要加黃豆。' },
+        'zh-Hans':{ label:'黄豆过敏', note:'我对黄豆过敏，请不要加黄豆。' },
+        ja:{ label:'大豆アレルギー', note:'大豆アレルギーがあります。大豆は抜いてください。' },
+      }
+    },
+  };
+
+  const UI = {
+    ko:{ scanLabel:'메뉴판 촬영', scanHint:'메뉴판이 프레임 안에 보이면 촬영하세요', resultLabel:'분석 결과', backToScan:'‹ 다시 찍기', analyzing:'메뉴판을 분석하고 있어요…', selected:n=>`선택 ${n}개`, makeCard:'주문카드 만들기', cardLabel:'주문카드', backToResult:'‹ 메뉴 수정', cardKicker:'TO. 사장님', cardTitle:'사장님, 주문할게요!', flipShow:'사장님께 보여드리기 ↻', flipHide:'다시 내 화면으로', flipHint:'버튼을 누르면 카드가 180° 돌아가요.<br>휴대폰을 그대로 테이블 건너편으로 돌려서 보여주세요.', restart:'처음부터 다시 데모하기' },
+    en:{ scanLabel:'Scan the menu', scanHint:'Line up the menu inside the frame and shoot', resultLabel:'Analysis', backToScan:'‹ Retake', analyzing:'Analyzing the menu…', selected:n=>`${n} selected`, makeCard:'Create order card', cardLabel:'Order card', backToResult:'‹ Edit order', cardKicker:'To the owner', cardTitle:'Here\u2019s my order!', flipShow:'Show to the owner ↻', flipHide:'Back to my screen', flipHint:'Tap to flip the card 180°.<br>Then turn your phone around and show it across the table.', restart:'Restart the demo' },
+    'zh-Hant':{ scanLabel:'拍攝菜單', scanHint:'將菜單對準框內拍攝', resultLabel:'分析結果', backToScan:'‹ 重新拍攝', analyzing:'正在分析菜單…', selected:n=>`已選 ${n} 項`, makeCard:'製作點餐卡', cardLabel:'點餐卡', backToResult:'‹ 修改餐點', cardKicker:'致 老闆', cardTitle:'老闆，我要點餐！', flipShow:'拿給老闆看 ↻', flipHide:'轉回我這邊', flipHint:'按下按鈕卡片會旋轉180°。<br>請直接把手機轉向桌子對面給老闆看。', restart:'重新開始示範' },
+    'zh-Hans':{ scanLabel:'拍摄菜单', scanHint:'将菜单对准框内拍摄', resultLabel:'分析结果', backToScan:'‹ 重新拍摄', analyzing:'正在分析菜单…', selected:n=>`已选 ${n} 项`, makeCard:'制作点餐卡', cardLabel:'点餐卡', backToResult:'‹ 修改餐点', cardKicker:'致 老板', cardTitle:'老板，我要点餐！', flipShow:'给老板看 ↻', flipHide:'转回我这边', flipHint:'按下按钮卡片会旋转180°。<br>请直接把手机转向桌子对面给老板看。', restart:'重新开始演示' },
+    ja:{ scanLabel:'メニューを撮影', scanHint:'メニューを枠内に収めて撮影してください', resultLabel:'分析結果', backToScan:'‹ 撮り直す', analyzing:'メニューを分析しています…', selected:n=>`${n}点選択中`, makeCard:'注文カードを作る', cardLabel:'注文カード', backToResult:'‹ メニューを編集', cardKicker:'店主へ', cardTitle:'店主さん、注文します！', flipShow:'店主に見せる ↻', flipHide:'自分の画面に戻る', flipHint:'ボタンを押すとカードが180°回転します。<br>そのままスマホをテーブルの向こう側に向けて見せてください。', restart:'デモを最初からやり直す' },
+  };
+
+  function qtyLabel(qty, lang){ return lang === 'ko' ? (qty + '개') : ('×' + qty); }
+
+  let currentLang = 'ko';
+
+  const MENU = [
+    {
+      id:'pork', ko:'돼지국밥', priceKRW:9000, spice:1, options:['lessRice'],
+      allergens:{pork:true, shrimp:true, wheat:false, milk:false, peanut:false, soy:false, egg:false, buckwheat:false},
+      i18n:{
+        ko:{ name:'돼지국밥', tags:['돼지고기','새우젓 사용'], howto:'새우젓과 부추로 간을 맞추고, 밥을 국물에 말아 드세요.' },
+        en:{ name:'Pork Bone Soup Rice', tags:['Pork','Uses salted shrimp'], howto:'Season with salted shrimp and chives, then mix the rice into the broth.' },
+        'zh-Hant':{ name:'豬骨湯飯', tags:['豬肉','使用蝦醬'], howto:'用蝦醬和韭菜調味，再把飯拌入湯裡享用。' },
+        'zh-Hans':{ name:'猪骨汤饭', tags:['猪肉','使用虾酱'], howto:'用虾酱和韭菜调味，再把饭拌入汤里享用。' },
+        ja:{ name:'テジクッパ（豚骨スープご飯）', tags:['豚肉','塩辛エビ使用'], howto:'塩辛エビとニラで味を整え、ご飯をスープに入れて召し上がってください。' },
+      }
+    },
+    {
+      id:'sundae', ko:'순대국밥', priceKRW:9000, spice:1, options:['lessRice'],
+      allergens:{pork:true, shrimp:true, wheat:false, milk:false, peanut:false, soy:false, egg:false, buckwheat:false},
+      i18n:{
+        ko:{ name:'순대국밥', tags:['돼지고기','새우젓 사용'], howto:'새우젓을 살짝 넣고, 부속 부위가 부담되면 순대만 골라 드셔도 돼요.' },
+        en:{ name:'Blood Sausage Soup Rice', tags:['Pork','Uses salted shrimp'], howto:'Add a little salted shrimp; if the organ pieces feel heavy, just pick out the sausage.' },
+        'zh-Hant':{ name:'米血腸湯飯', tags:['豬肉','使用蝦醬'], howto:'加一點蝦醬調味，如果不敢吃內臟，只吃米血腸也可以。' },
+        'zh-Hans':{ name:'米血肠汤饭', tags:['猪肉','使用虾酱'], howto:'加一点虾酱调味，如果不敢吃内脏，只吃米血肠也可以。' },
+        ja:{ name:'スンデクッパ（腸詰めスープご飯）', tags:['豚肉','塩辛エビ使用'], howto:'塩辛エビを少し加え、内臓が苦手なら腸詰めだけ選んで食べても大丈夫です。' },
+      }
+    },
+    {
+      id:'milmyeon', ko:'물밀면', priceKRW:8000, spice:2, options:['lessSpicy'],
+      allergens:{pork:false, shrimp:false, wheat:true, milk:false, peanut:false, soy:false, egg:true, buckwheat:false},
+      i18n:{
+        ko:{ name:'물밀면', tags:['밀가루(글루텐)','차가운 육수'], howto:'식초·겨자를 살짝 더하면 더 시원해요. 면은 가위로 잘라 드세요.' },
+        en:{ name:'Cold Wheat Noodles (Broth)', tags:['Wheat (gluten)','Cold broth'], howto:'A little vinegar and mustard makes it more refreshing. Cut the noodles with scissors.' },
+        'zh-Hant':{ name:'冷麥麵（湯）', tags:['小麥（麩質）','冰涼湯底'], howto:'加一點醋和芥末更清爽，可以用剪刀把麵剪短再吃。' },
+        'zh-Hans':{ name:'冷麦面（汤）', tags:['小麦（麸质）','冰凉汤底'], howto:'加一点醋和芥末更清爽，可以用剪刀把面剪短再吃。' },
+        ja:{ name:'水冷麺（スープ）', tags:['小麦（グルテン）','冷たいスープ'], howto:'酢とからしを少し加えるとより爽やかです。麺ははさみで切って食べてください。' },
+      }
+    }
+  ];
+
+  const state = {};
+  MENU.forEach(m => {
+    state[m.id] = { qty:0, opts:{} };
+    (m.options||[]).forEach(k => { state[m.id].opts[k] = false; });
+  });
+  let soyAllergy = true;
+  let cardLines = [], cardNotes = [];
+
+  /* ---------- screen / stepper helpers ---------- */
+  const stepperEl = document.getElementById('stepperDots');
+  function setStepper(mode, idx){
+    const total = mode === 'food' ? 3 : 2;
+    stepperEl.innerHTML = '';
+    for(let i=0;i<total;i++){
+      const d = document.createElement('div');
+      d.className = 'dot' + (i===idx ? ' active' : (i<idx ? ' done' : ''));
+      stepperEl.appendChild(d);
+    }
+  }
+  function goToScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  /* ---------- mode switch ---------- */
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.mode === 'food'){ goToScreen('screen-scan'); setStepper('food',0); }
+      else { goToScreen('screen-talk-home'); setStepper('talk',0); }
+    });
+  });
+
+  /* ---------- FOOD: scan ---------- */
+  document.getElementById('shutterBtn').addEventListener('click', () => {
+    const flash = document.getElementById('flash');
+    flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+    setTimeout(() => {
+      goToScreen('screen-result');
+      setStepper('food',1);
+      runAnalysis();
+    }, 260);
+  });
+
+  /* ---------- FOOD: analysis + selection ---------- */
+  const resultScroll = document.getElementById('resultScroll');
+  const bottomBar = document.getElementById('bottomBar');
+  const makeCardBtn = document.getElementById('makeCardBtn');
+  let analyzed = false;
+
+  function runAnalysis(){
+    if (analyzed) { renderItems(); return; }
+    resultScroll.innerHTML = '<div class="analyzing" id="analyzing"><div class="spin"></div>' + UI[currentLang].analyzing + '</div>';
+    bottomBar.style.display = 'none';
+    setTimeout(() => { analyzed = true; renderItems(); }, 1100);
+  }
+
+  function chiliRow(level){
+    let out = '<div class="spice">';
+    for (let i=1;i<=3;i++) out += '<span class="chili ' + (i<=level ? 'on':'') + '">🌶️</span>';
+    out += '</div>';
+    return out;
+  }
+
+  function formatPrice(krw, code){
+    if (code === 'KRW') return '₩' + krw.toLocaleString();
+    const r = RATES[code];
+    const val = krw / r.rate;
+    const conv = r.symbol + val.toLocaleString(undefined, {maximumFractionDigits:r.decimals, minimumFractionDigits:r.decimals});
+    return conv + ' <span class="sub">· ₩' + krw.toLocaleString() + '</span>';
+  }
+
+  function renderItems(){
+    resultScroll.innerHTML = '';
+    bottomBar.style.display = 'flex';
+    MENU.forEach((m, idx) => {
+      const t = m.i18n[currentLang];
+      const labels = ALLERGEN_LABELS[currentLang];
+      const el = document.createElement('div');
+      el.className = 'item-card';
+      el.style.animationDelay = (idx * 90) + 'ms';
+      const allergyGrid = ALLERGENS.map(a =>
+        '<div class="aitem ' + (m.allergens[a.key] ? 'on' : '') + '"><span class="ic">' + a.icon + '</span><span class="lb">' + labels[a.key] + '</span></div>'
+      ).join('');
+      const nameLine = currentLang === 'ko' ? '' : '<div class="en">' + t.name + '</div>';
+      el.innerHTML =
+        '<div class="item-head">' +
+          '<div class="item-names">' +
+            '<div class="ko">' + m.ko + '</div>' +
+            nameLine +
+            '<div class="price">' + formatPrice(m.priceKRW, currentCurrency) + '</div>' +
+          '</div>' +
+          chiliRow(m.spice) +
+        '</div>' +
+        '<div class="tags">' + t.tags.map(tag => '<span class="tag">' + tag + '</span>').join('') + '</div>' +
+        '<div class="allergy-head">' + ALLERGY_HEAD[currentLang] + '</div>' +
+        '<div class="allergy-grid">' + allergyGrid + '</div>' +
+        '<div class="howto"><b>' + HOWTO_LABEL[currentLang] + '</b> · ' + t.howto + '</div>' +
+        '<div class="item-foot">' +
+          '<div class="opt-chips">' + (m.options||[]).map(key => {
+            const od = OPTION_DEFS[key];
+            const active = state[m.id].opts[key];
+            return '<button class="less-spicy ' + (active ? 'on' : '') + '" data-id="' + m.id + '" data-opt="' + key + '">' + od.icon + ' ' + od.i18n[currentLang].label + '</button>';
+          }).join('') + '</div>' +
+          '<div class="stepper-qty">' +
+            '<button data-act="minus" data-id="' + m.id + '">−</button>' +
+            '<span class="qty" id="qty-' + m.id + '">' + state[m.id].qty + '</span>' +
+            '<button data-act="plus" data-id="' + m.id + '">+</button>' +
+          '</div>' +
+        '</div>';
+      resultScroll.appendChild(el);
+    });
+
+    resultScroll.querySelectorAll('[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id, act = btn.dataset.act;
+        if (act === 'plus') state[id].qty = Math.min(9, state[id].qty + 1);
+        if (act === 'minus') state[id].qty = Math.max(0, state[id].qty - 1);
+        document.getElementById('qty-'+id).textContent = state[id].qty;
+        updateBar();
+      });
+    });
+
+    resultScroll.querySelectorAll('.less-spicy').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id, opt = btn.dataset.opt;
+        state[id].opts[opt] = !state[id].opts[opt];
+        btn.classList.toggle('on', state[id].opts[opt]);
+      });
+    });
+
+    updateBar();
+  }
+
+  function updateBar(){
+    const total = MENU.reduce((s,m) => s + state[m.id].qty, 0);
+    document.getElementById('countText').textContent = UI[currentLang].selected(total);
+    makeCardBtn.disabled = total === 0;
+  }
+
+  function applyUIStrings(lang){
+    const t = UI[lang];
+    document.getElementById('scanLabelText').textContent = t.scanLabel;
+    document.getElementById('scanHintText').textContent = t.scanHint;
+    document.getElementById('resultLabelText').textContent = t.resultLabel;
+    document.getElementById('backToScan').textContent = t.backToScan;
+    document.getElementById('cardLabelText').textContent = t.cardLabel;
+    document.getElementById('backToResult').textContent = t.backToResult;
+    makeCardBtn.textContent = t.makeCard;
+    document.getElementById('flipHintText').innerHTML = t.flipHint;
+    document.getElementById('restartBtn').textContent = t.restart;
+    const soyBtn = document.getElementById('soyToggle');
+    soyBtn.textContent = OPTION_DEFS.soyAllergy.icon + ' ' + OPTION_DEFS.soyAllergy.i18n[lang].label + (lang === 'ko' ? ' — 전달하기' : '');
+    updateBar();
+    const cardScreenActive = document.getElementById('screen-card').classList.contains('active');
+    if (cardScreenActive && orderCard.classList.contains('flipped')){
+      flipBtn.textContent = t.flipHide;
+    } else if (cardScreenActive){
+      renderCardView('customer');
+      flipBtn.textContent = t.flipShow;
+    }
+  }
+
+  document.querySelectorAll('#currencyRow .currency-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#currencyRow .currency-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentCurrency = chip.dataset.cur;
+      if (analyzed) renderItems();
+    });
+  });
+
+  document.querySelectorAll('#langRow .currency-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#langRow .currency-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentLang = chip.dataset.lang;
+      applyUIStrings(currentLang);
+      if (analyzed) renderItems();
+    });
+  });
+
+  document.getElementById('backToScan').addEventListener('click', () => { goToScreen('screen-scan'); setStepper('food',0); });
+
+  /* ---------- FOOD: order card ---------- */
+  makeCardBtn.addEventListener('click', () => {
+    orderCard.classList.remove('flipped');
+    flipBtn.textContent = UI[currentLang].flipShow;
+    buildCard();
+    goToScreen('screen-card');
+    setStepper('food',2);
+  });
+  document.getElementById('backToResult').addEventListener('click', () => {
+    orderCard.classList.remove('flipped');
+    flipBtn.textContent = UI[currentLang].flipShow;
+    goToScreen('screen-result');
+    setStepper('food',1);
+  });
+
+  document.getElementById('soyToggle').addEventListener('click', function(){
+    soyAllergy = !soyAllergy;
+    this.classList.toggle('on', soyAllergy);
+  });
+
+  function buildCard(){
+    const lines = [];
+    const notes = [];
+    const seen = new Set();
+    MENU.forEach(m => {
+      const st = state[m.id];
+      if (st.qty > 0){
+        lines.push({ nameKo:m.ko, nameLang:m.i18n[currentLang].name, qty:st.qty });
+        (m.options||[]).forEach(key => {
+          if (st.opts[key] && !seen.has(key)){
+            seen.add(key);
+            const od = OPTION_DEFS[key];
+            notes.push({ ko: od.noteKo, lang: od.i18n[currentLang].note });
+          }
+        });
+      }
+    });
+    if (soyAllergy){
+      const od = OPTION_DEFS.soyAllergy;
+      notes.push({ ko: od.noteKo, lang: od.i18n[currentLang].note });
+    }
+    cardLines = lines;
+    cardNotes = notes;
+    renderCardView('customer');
+  }
+
+  function renderCardView(view){
+    const lang = view === 'vendor' ? 'ko' : currentLang;
+    document.getElementById('cardKicker').textContent = UI[lang].cardKicker;
+    document.getElementById('cardTitle').textContent = UI[lang].cardTitle;
+    document.getElementById('orderLines').innerHTML = cardLines.map(l => {
+      const name = view === 'vendor' ? l.nameKo : l.nameLang;
+      return '<div class="order-line"><span>' + name + '</span><span class="qty-badge">' + qtyLabel(l.qty, lang) + '</span></div>';
+    }).join('');
+    const noteEl = document.getElementById('orderNote');
+    noteEl.innerHTML = cardNotes.map(n => '<div>' + (view === 'vendor' ? n.ko : n.lang) + '</div>').join('');
+    noteEl.classList.toggle('empty', cardNotes.length === 0);
+  }
+
+  const flipBtn = document.getElementById('flipBtn');
+  const orderCard = document.getElementById('orderCard');
+  flipBtn.addEventListener('click', () => {
+    const flipped = orderCard.classList.toggle('flipped');
+    renderCardView(flipped ? 'vendor' : 'customer');
+    flipBtn.textContent = flipped ? UI[currentLang].flipHide : UI[currentLang].flipShow;
+  });
+
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    MENU.forEach(m => {
+      state[m.id] = { qty:0, opts:{} };
+      (m.options||[]).forEach(k => { state[m.id].opts[k] = false; });
+    });
+    soyAllergy = true;
+    document.getElementById('soyToggle').classList.add('on');
+    analyzed = false;
+    orderCard.classList.remove('flipped');
+    flipBtn.textContent = UI[currentLang].flipShow;
+    goToScreen('screen-scan');
+    setStepper('food',0);
+  });
+
+  /* ---------- TALK mode ---------- */
+  const PHRASES = [
+    {en:'Do you take card payments?', ko:'카드 결제 되나요?'},
+    {en:'How much is this?', ko:'이거 얼마예요?'},
+    {en:'Can I get this to go?', ko:'포장 가능해요?'},
+    {en:'Where is the restroom?', ko:'화장실이 어디예요?'},
+  ];
+  let phraseIdx = 0;
+
+  const micBtn = document.getElementById('micBtn');
+  const micState = document.getElementById('micState');
+  micBtn.addEventListener('click', () => {
+    startListening(PHRASES[phraseIdx % PHRASES.length]);
+    phraseIdx++;
+  });
+
+  document.querySelectorAll('.phrase-chip').forEach((chip, i) => {
+    chip.addEventListener('click', () => startListening(PHRASES[i]));
+  });
+
+  function startListening(phrase){
+    micBtn.classList.add('listening');
+    micState.textContent = '듣는 중…';
+    setTimeout(() => {
+      micBtn.classList.remove('listening');
+      micState.textContent = '';
+      showTalkCard(phrase);
+    }, 900);
+  }
+
+  function showTalkCard(phrase){
+    document.getElementById('recognizedText').textContent = '"' + phrase.en + '"';
+    document.getElementById('talkKo').textContent = phrase.ko;
+    const card = document.getElementById('talkCard');
+    card.classList.remove('flipped');
+    document.getElementById('talkFlipBtn').textContent = '상대방에게 보여드리기 ↻';
+    goToScreen('screen-talk-card');
+    setStepper('talk',1);
+  }
+
+  document.getElementById('talkBack').addEventListener('click', () => { goToScreen('screen-talk-home'); setStepper('talk',0); });
+  document.getElementById('talkFlipBtn').addEventListener('click', () => {
+    const card = document.getElementById('talkCard');
+    const flipped = card.classList.toggle('flipped');
+    document.getElementById('talkFlipBtn').textContent = flipped ? '다시 내 화면으로' : '상대방에게 보여드리기 ↻';
+  });
+
+  /* ---------- CHAT ---------- */
+  const chatFab = document.getElementById('chatFab');
+  const chatPanel = document.getElementById('chatPanel');
+  const chatBody = document.getElementById('chatBody');
+  chatFab.addEventListener('click', () => chatPanel.classList.add('open'));
+  document.getElementById('chatClose').addEventListener('click', () => chatPanel.classList.remove('open'));
+
+  const CANNED = [
+    { keys:['맵','매운'], a:'돼지국밥·순대국밥은 순한 편이고, 물밀면을 비빔으로 바꾸면 꽤 매워요. 메뉴 화면에서 "덜 맵게"를 눌러보세요 🌶️' },
+    { keys:['환전','환율'], a:'자갈치시장 주변에 환전소가 몇 곳 있어요. "먹기" 탭 메뉴 화면에서 가격을 원하는 통화로 바로 바꿔볼 수도 있어요 💱' },
+    { keys:['채식','베지'], a:'이 국밥집은 고기 육수 기반이라 채식 메뉴는 없어요. 근처 채식 식당을 찾아드릴 수 있어요 🌱' },
+    { keys:['화장실'], a:'가게 안쪽 오른편에 화장실이 있어요. 없으면 시장 공용 화장실을 이용하시면 돼요 🚻' },
+    { keys:['카드','결제'], a:'이 가게는 카드 결제 가능해요. 안 되는 곳도 있으니 "말하기" 탭에서 "카드 결제 되나요?" 카드를 미리 준비해두면 편해요 💳' },
+  ];
+  const FALLBACK = '아직 준비된 답변이 없는 질문이에요. 실제 서비스에서는 실시간 AI가 바로 답해드려요. 아래 추천 질문을 눌러보시겠어요?';
+
+  function answer(q){
+    const hit = CANNED.find(c => c.keys.some(k => q.includes(k)));
+    return hit ? hit.a : FALLBACK;
+  }
+
+  function addBubble(text, who){
+    const b = document.createElement('div');
+    b.className = 'bubble ' + who;
+    b.textContent = text;
+    chatBody.appendChild(b);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function ask(q){
+    addBubble(q, 'user');
+    const typing = document.createElement('div');
+    typing.className = 'typing';
+    typing.textContent = 'AI가 입력 중…';
+    chatBody.appendChild(typing);
+    chatBody.scrollTop = chatBody.scrollHeight;
+    setTimeout(() => {
+      typing.remove();
+      addBubble(answer(q), 'ai');
+    }, 650);
+  }
+
+  document.querySelectorAll('.chat-suggest .sc').forEach(btn => {
+    btn.addEventListener('click', () => ask(btn.textContent));
+  });
+
+  function sendChat(){
+    const input = document.getElementById('chatInput');
+    const v = input.value.trim();
+    if (!v) return;
+    input.value = '';
+    ask(v);
+  }
+  document.getElementById('chatSend').addEventListener('click', sendChat);
+  document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+
+  /* ---------- init ---------- */
+  setStepper('food', 0);
+  applyUIStrings(currentLang);
+})();
+</script>
+</body>
+</html>

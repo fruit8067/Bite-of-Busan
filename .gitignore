@@ -6,4 +6,10 @@ ios/
 .env
 .env.local
 dist/
+dist2/
 build/
+
+# Leftover font installer download — the actual font file we use lives at
+# frontend/assets/fonts/BusanFont_Provisional.ttf (already tracked there).
+/bFont_wProvisional_ttf.zip
+/bFont_wProvisional_ttf/
