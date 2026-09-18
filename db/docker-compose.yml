@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  # Uncomment only if docs/ARCHITECTURE.md records a decision to introduce
+  # MySQL (Redis is the default store).
+  # mysql:
+  #   image: mysql:8.4
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: changeme
+  #     MYSQL_DATABASE: app
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+
+volumes:
+  redis-data:
+  # mysql-data:
