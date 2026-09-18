@@ -37,11 +37,7 @@ Respond with ONLY a JSON object of the shape:
   "priceKrw": number|null,
   "translations": { "en": { "name": string, "description": string|null }, "zh-TW": { "name": string, "description": string|null } } } ] }`;
 
-export async function scanMenuImage(input: {
-  imageBase64?: string;
-  imageUrl?: string;
-}): Promise<MenuScanResult> {
-  const imageUrl = input.imageUrl ?? `data:image/jpeg;base64,${input.imageBase64}`;
+export async function scanMenuImage(imageBase64: string): Promise<MenuScanResult> {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
     response_format: { type: "json_object" },
@@ -51,7 +47,7 @@ export async function scanMenuImage(input: {
         role: "user",
         content: [
           { type: "text", text: "Extract the restaurant name (if visible) and the menu items from this photo." },
-          { type: "image_url", image_url: { url: imageUrl } },
+          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
         ],
       },
     ],

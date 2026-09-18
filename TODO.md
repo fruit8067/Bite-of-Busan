@@ -7,21 +7,16 @@
 - [x] OpenAI API 키 `backend/.env`에 설정 완료
 
 ## 출시 전에 필요한 것 (지금 당장은 아님)
-- [ ] **Android APK 빌드 → GitHub Release 업로드** (2026-09-18, owner 요청)
-  — 로컬 Gradle 빌드 선호 (Android SDK 이미 설치 중, Expo 계정 불필요).
-  빌드되면 `gh release create`로 `fruit8067/Bite-of-Busan` 저장소에 `.apk`
-  첨부해서 올릴 것. **주의**: GitHub Release 생성은 공개적으로 보이는
-  작업이라 매번 실행 전 owner 확인 필요.
-- [x] ~~MySQL 운영 환경~~ — DB 자체를 완전히 뺐음 (2026-09-18, 배포 비용 이유,
-  `docs/ARCHITECTURE.md` "No DB" 참고). 더 이상 해당 없음.
-- [x] ~~가게(restaurant) 식별 방식 확정~~ — 사용자 입력 대신 AI가 사진에서
-  추론하는 방식으로 확정, 이미 구현 완료 (`docs/PRODUCT.md` "지금 증분").
+- [ ] Android APK 서명/빌드 설정 (`eas build -p android` 또는 로컬 Gradle) —
+  Expo 계정 필요
+- [ ] MySQL 운영 환경 — 지금 `db/docker-compose.yml`의 `MYSQL_ROOT_PASSWORD:
+  changeme`는 로컬 개발용. 배포 전 반드시 교체.
+- [ ] 가게(restaurant) 식별 방식 확정 — v1은 사용자가 가게 이름을 직접 입력하는
+  것으로 임시 제안해뒀음 (`docs/DB_SCHEMA.md`). GPS 기반 매칭 등으로 바꿀지
+  backend/db 에이전트가 실제 작업하면서 정할 것.
 - [ ] OCR 정확도 실측 — GPT vision 한 번 호출로 시작 (`docs/ARCHITECTURE.md`).
   실제 메뉴판으로 테스트해보고 부정확하면 전용 OCR(네이버 클로바 OCR 등) 도입
   검토.
-- [ ] Vercel 배포 — 백엔드 완전 무상태 전환 후 무료 배포 가능해짐, 코드 준비는
-  backend에게 배정함(`docs/TASKS.md`), 실제 `vercel login`/배포는 owner 본인
-  계정으로 직접 진행 필요.
 
 ## 로드맵 (v1 이후, docs/PRODUCT.md 참고)
 - [ ] 읽기 — 안내문/키오스크/정류장 사진 설명 기능

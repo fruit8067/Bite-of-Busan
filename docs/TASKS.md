@@ -6,37 +6,6 @@ lists the current assignment per role, `docs/STATUS.md` reports progress. No
 one needs to poll — just check this file when starting work or when the owner
 says "TASKS.md 확인해줘".
 
-## Completed: Vercel Blob menu scanning
-
-**Owner intent:** replace the current base64 menu-photo request with a Vercel
-Blob upload flow so large phone photos do not hit Vercel's 4.5MB function body
-limit.
-
-**Backend task:**
-- Mount the existing Blob upload router at the path expected by the frontend.
-- Extend `POST /menu/scan` to accept `{ "imageUrl": string }` in addition to,
-  or instead of, the legacy `imageBase64` field.
-- Pass the public Blob URL to OpenAI as an `image_url` URL; do not download and
-  re-encode it as base64 unless the SDK requires it.
-- Keep the existing response shape and error semantics, update
-  `docs/API_CONTRACT.md`, and validate URL input before calling OpenAI.
-- Decide and document whether the temporary Blob should be deleted after the
-  scan or retained; deletion is preferred for the stateless/no-storage
-  architecture.
-
-**Frontend task (after the backend contract is updated):**
-- Use `uploadImageToBlob()` from `src/api/uploadApi.ts` after image selection.
-- Store the returned Blob URL, call `scanMenu(imageUrl)`, and remove the
-  base64 conversion path from `MenuScanScreen` and `menuApi.ts`.
-- Delete the uploaded Blob on scan failure or when replacing the selected
-  image, without blocking the user-facing error message if cleanup fails.
-- Preserve the existing preview, retake, loading, and snackbar behavior.
-- Verify with `npx tsc --noEmit` and the web export.
-
-**Status:** implemented in the backend and frontend. The legacy base64 input is
-still accepted by the backend for compatibility, while the frontend now uses
-the Blob URL flow exclusively.
-
 ## Frontend
 **Done:**
 - 메뉴 스캔 화면 (`src/screens/MenuScanScreen.tsx`) — STATUS.md 참고.
@@ -232,23 +201,6 @@ number` 필드가 백엔드에서 없어질 예정이니(사용하는 곳 확인
 아무 동작 안 하는 상태로 둬도 되고, 헷갈리면 이번 색상 정리하는 김에 숨겨두는
 것도 좋습니다 (필수는 아님, 판단 맡길게요).
 
-**Now (2026-09-18, owner 결정) — 웹 버전 배포 준비:** 백엔드는 이미 Vercel에
-배포 완료했습니다 (`https://biteofbusan.vercel.app`, 정상 동작 확인함). 이제
-웹 프론트도 배포할 차례입니다.
-
-1. `src/api/config.ts`가 지금 `http://localhost:4000`을 기본값으로 쓰고
-   있는데, 프로덕션 웹 빌드에서는 `https://biteofbusan.vercel.app`을 바라봐야
-   합니다. `EXPO_PUBLIC_API_URL` 환경변수로 분기하도록 이미 돼있는지 확인하고,
-   안 돼있으면 빌드 시점에 이 값을 주입할 수 있게 만들어주세요 (Expo는
-   `EXPO_PUBLIC_` 접두사 환경변수를 클라이언트 코드에서 바로 읽을 수 있음).
-2. `npx expo export --platform web`로 정적 빌드 산출물 생성 확인 (이미 여러
-   번 검증했던 명령이라 새로 막힐 건 없을 거예요).
-3. 그 정적 산출물을 **Vercel에 별도 프로젝트로 배포 준비** — 백엔드와 같은
-   계정 쓰면 되니 편할 거예요. `vercel.json`에 정적 사이트용 설정(빌드
-   출력 디렉토리 지정 등) 추가해주세요. 실제 `vercel --prod` 배포 실행은
-   owner 본인이 할 겁니다 — 코드/설정 준비까지만 해주세요.
-4. CORS는 백엔드가 이미 오리진 제한 없이 열어놨으니 추가 작업 불필요.
-
 ## Backend
 **⚠ 아래 두 "Now" 블록(가격 필드, 가게이름 null 처리 중 DB 관련 부분)은
 DB 완전 제거 결정(맨 아래 새 블록 참고)으로 일부 무의미해졌습니다 — MySQL/
@@ -311,30 +263,6 @@ Redis 관련 지시는 무시하고, 맨 아래 "Now (2026-09-18, DB 완전 제�
   behavior 설명 삭제).
 - 로컬 docker(Redis/MySQL 컨테이너)는 이제 안 써도 됩니다 — 끄셔도 되고,
   당장 안 끄셔도 상관없어요 (그냥 안 쓰는 것뿐).
-
-**Now (2026-09-18, owner 결정) — Vercel 배포 준비:** 백엔드가 완전 무상태가
-됐으니(DB 없음) Vercel 무료 티어(서버리스 함수)에 배포 가능합니다. 지금
-당장 실제 배포까지는 안 해도 되고, **배포 가능하게 코드/설정만 준비**해주세요
-(실제 `vercel login`/`vercel deploy` 실행은 owner 본인 Vercel 계정으로 직접
-해야 하는 부분이라 owner가 진행할 거예요).
-
-1. Express 앱을 Vercel 서버리스 함수로 감싸는 진입점 추가 — 보통 `api/index.ts`
-   (또는 `api/[...path].ts`) 에서 기존 `app`(Express 인스턴스)을 export하고,
-   `vercel.json`에 라우팅 설정 (`{"rewrites":[{"source":"/(.*)","destination":"/api"}]}`
-   같은 패턴, 정확한 최신 방식은 Vercel의 "Express on Vercel" 공식 가이드
-   확인해서 따라주세요 — 제가 확인 못 한 최신 문서니 실제 검색해서 진행).
-   기존 `npm run dev`(로컬 개발)는 그대로 동작해야 합니다 — 안 깨뜨리기.
-2. **주의할 점 — 요청 크기 제한**: 현재 `express.json({ limit: "10mb" })`로
-   메뉴판 사진(base64)을 받는데, Vercel 서버리스 함수는 요청 본문 크기 제한이
-   있습니다(플랜별로 다름, Hobby 무료 티어는 더 낮음). 실제 사진 크기로
-   테스트해보고 제한에 걸리면 프론트와 상의해서 이미지 압축/리사이즈를
-   촬영 단계에서 하도록 조정이 필요할 수 있어요 — 발견되면 PM한테 플래그해주세요.
-3. 환경변수(`OPENAI_API_KEY`)는 `.env` 파일이 아니라 Vercel 프로젝트 설정에서
-   등록해야 한다는 점을 `backend/README.md`나 배포 가이드 문서에 짧게 메모
-   남겨주세요 (owner가 실제 배포할 때 참고하게).
-4. 로컬에서 `vercel dev`(Vercel CLI, 로그인 불필요한 로컬 시뮬레이션 모드)로
-   서버리스 진입점이 정상 동작하는지 확인 — 실제 `vercel deploy`/로그인은
-   하지 마세요, owner 몫입니다.
 
 ## DB
 **Now (2026-09-18): 이 역할은 당분간 보류입니다.** owner가 배포 비용 때문에

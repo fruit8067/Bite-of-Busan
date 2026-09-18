@@ -30,13 +30,8 @@ returns the result.
 
 Request body:
 ```
-{ "imageUrl": string }  // public HTTPS Vercel Blob URL for a JPEG/PNG menu photo
+{ "imageBase64": string }  // raw base64 or data: URL, JPEG/PNG photo of the menu
 ```
-The client first uploads the image directly to Vercel Blob through
-`POST /api/upload/blob-upload`, then sends the returned public URL here. The
-legacy `{ "imageBase64": string }` shape is still accepted for local/backward
-compatibility, but new clients must use `imageUrl` to avoid the Vercel Function
-4.5MB request-body limit.
 Response (200):
 ```
 {
@@ -62,20 +57,8 @@ restaurant both hit OpenAI. Items no longer have a stable `id` (nothing is persi
 no row to key off of).
 
 Errors:
-- `400 { "error": "imageUrl is required" }` or invalid/non-HTTPS URL
+- `400 { "error": "imageBase64 is required" }`
 - `502 { "error": "menu scan failed" }` — OpenAI call failed (see server logs)
-
-### POST /api/upload/blob-upload
-Auth: none
-Request body: Vercel Blob client upload handshake payload
-Response: Vercel Blob client token response
-Errors: `400` when the upload handshake fails
-
-### DELETE /api/upload/blob-delete
-Auth: none
-Request body: `{ "url": string }`
-Response: `{ "success": true, "message": string }`
-Errors: `400` when the URL is missing, `500` when Blob deletion fails
 
 Rate limiting: not implemented, no `clientId`/session concept in v1 (no auth). Flag to PM if
 abuse protection is needed before launch.

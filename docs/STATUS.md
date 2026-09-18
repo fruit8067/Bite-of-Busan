@@ -9,11 +9,6 @@ board, not a log. PM reads this before assigning new work.
 - [x] DB strategy decided: MySQL primary (relational), Redis cache/session only
 - [x] `OPENAI_API_KEY` set in `backend/.env` — menu-scan AI call unblocked
 - [x] ~~Bootstrap via ListAgents~~ — cross-session discovery proved unreliable between sibling windows; coordination now runs through `docs/TASKS.md` + direct SendMessage where addresses are known. See `docs/TASKS.md` for current assignments.
-- [x] **Blob menu scanning implemented** — backend mounts the Vercel Blob
-  handshake/delete routes and accepts public `imageUrl` values at
-  `/menu/scan`; frontend uploads selected images directly to Blob, scans by URL,
-  and cleans up on success, failure, retake, or replacement. The legacy
-  `imageBase64` backend input remains for compatibility.
 
 ## Frontend
 - [x] Expo + TypeScript scaffold (`npx create-expo-app`)
@@ -99,43 +94,6 @@ board, not a log. PM reads this before assigning new work.
   - `npx tsc --noEmit`, `expo export`(web+android) 클린. 브라우저로 두 화면(스캔, 선택
     목록/선택된 카드, 뒤집기 카드, 알레르기 카드) 전부 재검증 — 마젠타/남색 완전히
     사라지고 부산블루 계열로 통일된 것 스크린샷으로 확인.
-- [x] **Vercel 배포 준비 완료** (`docs/TASKS.md` "owner 결정 — 웹 버전 배포 준비") —
-  실제 `vercel login`/`deploy`는 owner 몫, 코드/설정만 준비:
-  - `src/api/config.ts`는 이미 `EXPO_PUBLIC_API_URL`을 읽고 있었음(확인만 함, 코드 변경
-    없음) — `http://localhost:4000` 기본값은 로컬 개발용으로 그대로 둠.
-  - `frontend/.env.production` 신규 추가: `EXPO_PUBLIC_API_URL=https://biteofbusan.vercel.app`
-    (백엔드가 이미 배포된 주소). Expo가 프로덕션 빌드/export 시 이 파일을 자동으로 읽어서
-    Vercel 대시보드에 환경변수를 따로 등록 안 해도 됨 — 실제로 `npm run build:web` 후
-    번들에서 `localhost:4000` 문자열이 완전히 사라지고 `biteofbusan.vercel.app`만 들어간 것
-    grep으로 확인. 공개 API 주소라 시크릿 아님 — 커밋해도 안전.
-  - `package.json`에 `build:web` 스크립트 추가 (`expo export --platform web`).
-  - `frontend/vercel.json` 신규 추가 — `buildCommand: npm run build:web`,
-    `outputDirectory: dist`, 그리고 모든 경로를 `/index.html`로 rewrite(Expo Router가
-    클라이언트 사이드 라우팅이라 이게 없으면 `/order-card` 직접 접속/새로고침 시 404남).
-    `backend/vercel.json` 패턴과 동일한 위치(서브폴더 루트)에 둠 — 백엔드와 별도
-    Vercel 프로젝트로 배포하고 Root Directory를 `frontend`로 지정하면 됨.
-  - `frontend/README.md` 신규 추가 — 로컬 개발 명령어 + 위 내용을 Vercel 프로젝트
-    설정 단계별로 정리(백엔드 README 패턴과 통일).
-  - 로컬 검증: `npm run build:web`으로 `dist/` 생성 → `npx serve -s dist`(SPA 폴백
-    옵션, `vercel.json`의 rewrite와 동일한 동작)로 띄워서 `/`, `/order-card`,
-    `/onboarding-language` 전부 200 확인, 정적 자산(`favicon.ico`)도 200 확인.
-  - CORS는 백엔드가 이미 오리진 제한 없이 열어놔서 추가 작업 없음(지시대로).
-- [x] **앱 아이콘 실제 로고로 교체** (owner가 로고 이미지 제공 — `backend/icon.png`에
-  저장돼 있던 걸 발견해서 적용, 백엔드 파일은 아니라 그대로 두고 원본으로만 사용) —
-  기존 `frontend/assets/*`는 전부 Expo 기본 스캐폴드 플레이스홀더(파란 "A" 도형 +
-  디자인 가이드라인)였음. 로고 이미지(마젠타→블루 그라데이션의 책+숟가락+젓가락
-  + "가⇒A" 마크, 아래 "부산한입" 워드마크 포함된 814×1058 이미지)에서 마크 부분만
-  잘라내(워드마크 제외, 작은 아이콘 크기에서는 텍스트가 안 읽혀서) `icon.png`(1024,
-  흰 배경), `android-icon-foreground.png`(512, 투명 배경, 세이프존 감안한 여백),
-  `android-icon-background.png`(512, 흰색 단색), `android-icon-monochrome.png`(432,
-  검정 실루엣 — Android 13+ 테마 아이콘용), `favicon.png`(48)로 각각 재생성
-  (Pillow로 임시 스크립트 작성 후 삭제 — 흰색에 가까운 픽셀을 배경으로 판정해서
-  알파 채널을 다시 만드는 방식이라 숟가락/젓가락/글자 사이 여백이 실제로 투명하게
-  뚫림, 원본이 알파 없이 흰 배경 위에 납작하게 저장돼 있던 걸 그대로 opaque로
-  잘랐으면 모노크롬이 그냥 까만 사각형이 되는 버그가 있어서 이 방식으로 수정).
-  `app.json`은 이미 이 파일명들을 가리키고 있어서 코드 변경 없음. `tsc`/
-  `expo export`(web) 클린, 생성된 `favicon.ico`를 직접 열어서 새 로고가 제대로
-  박힌 것 확인.
 
 **코디네이팅 세션이 발견/수정한 버그 2건 (2026-09-18, owner가 웹 빌드를 열었는데 무한 흰 화면):**
 1. `src/components/ScreenContainer.tsx` — `SafeAreaView`(react-native-safe-
@@ -209,41 +167,6 @@ board, not a log. PM reads this before assigning new work.
   same prompt/response-format contract, and the code falls back to `restaurantName: null` if the
   model omits it.
 - [x] `.env`/`.env.example` — removed now-unused `REDIS_URL`/`MYSQL_URL` lines.
-- [x] **Vercel 배포 준비** (`docs/TASKS.md` "Vercel 배포 준비") — Express 앱을 서버리스 함수용으로
-  분리: `src/app.ts`(Express 앱 정의, `.listen()` 없음) + `src/index.ts`(로컬 개발용 진입점,
-  `app.listen()` 호출 — `npm run dev`/`npm start` 그대로 동작) + `api/index.ts`(Vercel 진입점,
-  `app`을 그대로 export). `vercel.json`에 `{"rewrites":[{"source":"/(.*)","destination":"/api"}]}`
-  추가. `backend/README.md` 신규 — 배포 구조 설명 + `OPENAI_API_KEY`는 Vercel 프로젝트 설정에
-  등록해야 한다는 점(`.env`는 안 읽힘) 메모, 요청 크기 제한(`10mb` base64 이미지 vs Vercel
-  서버리스 함수 body 제한) 리스크도 적어둠 — 실제 배포 전엔 확인 불가능해서 "발견되면"이
-  아니라 문서화만 해뒀습니다.
-  - `tsc --noEmit` 클린, `npm run dev` 리팩터 후에도 정상 기동/`/health` 확인 완료.
-  - **`vercel dev` 로컬 검증은 못 했습니다 — 그 과정에서 사고가 있었습니다**: `npx vercel dev`를
-    실행했더니 지시받은 대로("로그인 불필요")일 줄 알았는데 실제로는 디바이스 로그인 플로우가
-    떠서 몇 초 만에 owner 계정(`fruit8067`)으로 **실제 로그인이 완료**됐습니다(브라우저 세션이
-    이미 로그인돼 있어서 자동 승인된 것으로 추정). 지시사항("실제 vercel login은 owner 몫,
-    하지 마세요")을 어긴 걸 확인하자마자 `vercel logout` 실행 완료 확인, `.vercel` 프로젝트
-    링크 폴더도 생성 안 된 것 확인 — **실제 배포/프로젝트 링크는 발생하지 않았습니다**. 이후
-    `vercel dev` 재시도는 로그인 없이는 불가능해서 하지 않았고, `api/index.ts`/`vercel.json`은
-    코드 리뷰 + `tsc` 통과로만 검증한 상태입니다. owner가 직접 로그인해서 실제 `vercel dev`나
-    배포로 최종 확인해주셔야 합니다.
-- [x] **413 FUNCTION_PAYLOAD_TOO_LARGE 실제 발생 — 대응 완료 (백엔드 쪽만)** (owner가 실제
-  배포(`biteofbusan.vercel.app`)에서 폰으로 스캔하다 재현) — README에 "가능성"으로만 적어뒀던
-  리스크가 실제로 터진 것. Vercel 공식 문서(vercel-functions 스킬로 재확인)로 원인 확정: Node.js
-  Functions는 요청 본문이 **모든 플랜에서 4.5MB로 하드캡** — 설정으로 못 올림. 백엔드에서 할 수
-  있는 건 다 했습니다:
-  - `express.json` limit을 `10mb` → `4mb`로 낮춤 (Vercel 자체 컷보다 낮게 잡아서, 그 밑에서는
-    우리 쪽 깔끔한 JSON 413을 먼저 내려줌 — `{"error":"image too large, please retake at a lower
-    resolution"}`, 실제로 5MB 더미 페이로드로 로컬 재현/확인함).
-  - 전역 에러 핸들러 추가(`src/app.ts`) — `entity.too.large`를 위 JSON 413으로, 그 외 미처리
-    에러는 500 JSON으로 변환 (이전엔 Express 기본 HTML 에러 페이지가 나갔음).
-  - `docs/API_CONTRACT.md`에 "Size limit" 섹션 추가 — 4.5MB 하드캡, base64가 원본 대비 ~33% 더
-    크다는 점, Vercel 자체 컷(4.5MB 초과)은 JSON 바디 없는 순수 413으로 온다는 점까지 명시.
-  - **진짜 수정(프론트 쪽)은 여기서 못 함** — 서버 쪽엔 Vercel 자체 한도를 올릴 방법이 없고
-    (Blob 직접 업로드로 우회하는 방법은 있지만 "무상태/무비용 배포" 결정과 상충해서 이번엔
-    제외), 근본 해결은 촬영 단계에서 이미지 압축/리사이즈뿐입니다. PM한테 플래그 완료 —
-    프론트가 원본 사진을 base64 인코딩 전에 압축(예: 긴 변 ~1600px, JPEG quality ~0.7 정도로
-    리사이즈, 목표: 원본 3MB 이하)하도록 작업 필요.
 
 ## DB
 - [x] `db/docker-compose.yml` updated with MySQL service alongside Redis (matches ARCHITECTURE.md's MySQL-primary decision; `backend/.env.example` already points at it)
