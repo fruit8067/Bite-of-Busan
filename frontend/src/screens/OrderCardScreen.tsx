@@ -17,7 +17,7 @@ import { MenuItem } from "../types/menu";
 import { useLanguage } from "../i18n/LanguageContext";
 import { translate } from "../i18n/strings";
 
-type DisplayLanguage = "en" | "zh-TW";
+type DisplayLanguage = "en" | "zh-TW" | "ja" | "es";
 
 type Selection = Record<
   string,
@@ -46,6 +46,8 @@ interface Props {
 const LANGUAGES: { code: DisplayLanguage; label: string }[] = [
   { code: "en", label: "English" },
   { code: "zh-TW", label: "繁體中文" },
+  { code: "ja", label: "日本語" },
+  { code: "es", label: "Español" },
 ];
 
 function buildInitialSelection(items: MenuItem[]): Selection {
@@ -58,16 +60,20 @@ function buildInitialSelection(items: MenuItem[]): Selection {
 }
 
 function translatedName(item: MenuItem, language: DisplayLanguage): string {
-  return language === "zh-TW" ? item.translationZhTw : item.translationEn;
+  if (language === "zh-TW") return item.translationZhTw;
+  if (language === "ja") return item.translationJa;
+  if (language === "es") return item.translationEs;
+  return item.translationEn;
 }
 
 function translatedDescription(
   item: MenuItem,
   language: DisplayLanguage
 ): string {
-  return language === "zh-TW"
-    ? item.descriptionZhTw || item.description
-    : item.description;
+  if (language === "zh-TW") return item.descriptionZhTw || item.description;
+  if (language === "ja") return item.descriptionJa || item.description;
+  if (language === "es") return item.descriptionEs || item.description;
+  return item.description;
 }
 
 function buildOrderLines(
@@ -99,7 +105,9 @@ export default function OrderCardScreen({
   const [cardVisible, setCardVisible] = useState(false);
   const [currency, setCurrency] = useState<CurrencyCode>("KRW");
   const [language, setLanguage] = useState<DisplayLanguage>(
-    uiLanguage === "zh-TW" ? "zh-TW" : "en"
+    uiLanguage === "zh-TW" || uiLanguage === "ja" || uiLanguage === "es"
+      ? uiLanguage
+      : "en"
   );
   const spiceLabels = [
     t("order.spiceNone"),

@@ -9,6 +9,8 @@ export interface ScannedMenuItem {
   translations: {
     en: { name: string; description: string | null };
     "zh-TW": { name: string; description: string | null };
+    ja: { name: string; description: string | null };
+    es: { name: string; description: string | null };
   };
 }
 
@@ -30,12 +32,14 @@ Then extract every distinct menu item you can read. For each item return:
   price is printed next to this item
 - translations.en: { name, description } in English
 - translations["zh-TW"]: { name, description } in Traditional Chinese
+- translations.ja: { name, description } in Japanese
+- translations.es: { name, description } in Spanish
 
 Respond with ONLY a JSON object of the shape:
 { "restaurantName": string|null,
   "items": [ { "nameKo": string, "spiceLevel": number|null, "allergens": string[], "howToEat": string|null,
   "priceKrw": number|null,
-  "translations": { "en": { "name": string, "description": string|null }, "zh-TW": { "name": string, "description": string|null } } } ] }`;
+  "translations": { "en": { "name": string, "description": string|null }, "zh-TW": { "name": string, "description": string|null }, "ja": { "name": string, "description": string|null }, "es": { "name": string, "description": string|null } } } ] }`;
 
 export async function scanMenuImage(input: {
   imageBase64?: string;

@@ -51,7 +51,9 @@ Response (200):
       "priceKrw": number | null,         // KRW price as printed on the menu, null if not visible/legible. Currency conversion (TWD/JPY/CNY/USD) is done client-side.
       "translations": {
         "en": { "name": string, "description": string | null },
-        "zh-TW": { "name": string, "description": string | null }
+        "zh-TW": { "name": string, "description": string | null },
+        "ja": { "name": string, "description": string | null },
+        "es": { "name": string, "description": string | null }
       }
     }
   ]

@@ -13,6 +13,8 @@ interface ScanMenuItemResponse {
   translations: {
     en: { name: string; description: string | null };
     "zh-TW": { name: string; description: string | null };
+    ja: { name: string; description: string | null };
+    es: { name: string; description: string | null };
   };
 }
 
@@ -42,8 +44,12 @@ function toMenuItem(item: ScanMenuItemResponse): MenuItem {
     nameKo: item.nameKo,
     translationEn: item.translations.en.name,
     translationZhTw: item.translations["zh-TW"].name,
+    translationJa: item.translations.ja.name,
+    translationEs: item.translations.es.name,
     description: item.translations.en.description ?? "",
     descriptionZhTw: item.translations["zh-TW"].description ?? "",
+    descriptionJa: item.translations.ja.description ?? "",
+    descriptionEs: item.translations.es.description ?? "",
     spiceLevel: (item.spiceLevel ?? 0) as SpiceLevel,
     allergens: item.allergens,
     howToEat: item.howToEat ?? "",

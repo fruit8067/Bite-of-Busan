@@ -5,8 +5,12 @@ export interface MenuItem {
   nameKo: string;
   translationEn: string;
   translationZhTw: string;
+  translationJa: string;
+  translationEs: string;
   description: string;
   descriptionZhTw: string;
+  descriptionJa: string;
+  descriptionEs: string;
   spiceLevel: SpiceLevel;
   allergens: string[];
   howToEat: string;

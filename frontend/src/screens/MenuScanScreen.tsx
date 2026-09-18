@@ -102,6 +102,9 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
       onAnalyze(restaurantName, items);
     } catch (err) {
       await deleteImageFromBlob(imageBlobUrl).catch(() => undefined);
+      setImageUri(null);
+      setImageBlobUrl(null);
+      setFileName(null);
       if (err instanceof MenuScanError) {
         setSnackbarMessage(err.message);
       } else {
