@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Checkbox, Chip, Divider, IconButton, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,9 +15,9 @@ import {
 } from "../utils/currency";
 import { MenuItem } from "../types/menu";
 import { useLanguage } from "../i18n/LanguageContext";
-import { translate } from "../i18n/strings";
+import { translate, UiLanguage } from "../i18n/strings";
 
-type DisplayLanguage = "en" | "zh-TW" | "ja" | "es";
+type DisplayLanguage = UiLanguage;
 
 type Selection = Record<
   string,
@@ -109,6 +109,9 @@ export default function OrderCardScreen({
       ? uiLanguage
       : "en"
   );
+  useEffect(() => {
+    if (uiLanguage) setLanguage(uiLanguage);
+  }, [uiLanguage]);
   const spiceLabels = [
     t("order.spiceNone"),
     t("order.spiceMild"),
@@ -521,77 +524,20 @@ function FlippableOrderCard({
           <Animated.View
             style={[
               styles.orderCard,
-              { backgroundColor: theme.colors.primary, transform: [{ rotate: frontRotate }] },
-            ]}
-          >
-            <Text
-              variant="labelLarge"
-              style={[styles.orderKicker, { color: theme.colors.onPrimary }]}
-            >
-              {translate(language, "orderCard.staffLabel")}
-            </Text>
-            <Text
-              variant="headlineSmall"
-              style={[styles.orderTitle, { color: theme.colors.onPrimary }]}
-            >
-              {translate(language, "orderCard.title")}
-            </Text>
-            {lines.map((line) => (
-              <View
-                key={line.id}
-                style={[styles.orderLine, { borderTopColor: theme.colors.onPrimary }]}
-              >
-                <Text
-                  variant="titleMedium"
-                  style={[styles.orderLineName, { color: theme.colors.onPrimary }]}
-                >
-                  {line.nameCustomer}
-                </Text>
-                <Text
-                  variant="titleMedium"
-                  style={[
-                    styles.qtyBadge,
-                    {
-                      color: theme.colors.onPrimaryContainer,
-                      backgroundColor: theme.colors.primaryContainer,
-                    },
-                  ]}
-                >
-                  x{line.quantity}
-                </Text>
-              </View>
-            ))}
-            {lines.some((line) => line.lessSpicy) && (
-              <View
-                style={[styles.notePill, { backgroundColor: theme.colors.primaryContainer }]}
-              >
-                <Text
-                  variant="labelMedium"
-                  style={{ color: theme.colors.onPrimaryContainer }}
-                >
-                  {translate(language, "orderCard.lessSpicyNote")}
-                </Text>
-              </View>
-            )}
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.orderCard,
-              { backgroundColor: theme.colors.secondary, transform: [{ rotate: backRotate }] },
+              { backgroundColor: theme.colors.secondary, transform: [{ rotate: frontRotate }] },
             ]}
           >
             <Text
               variant="labelLarge"
               style={[styles.orderKicker, { color: theme.colors.onSecondary }]}
             >
-              TO. 사장님
+              {translate(language, "orderCard.staffLabel")}
             </Text>
             <Text
               variant="headlineSmall"
               style={[styles.orderTitle, { color: theme.colors.onSecondary }]}
             >
-              사장님, 주문할게요!
+              {translate(language, "orderCard.title")}
             </Text>
             {lines.map((line) => (
               <View
@@ -602,8 +548,7 @@ function FlippableOrderCard({
                   variant="titleMedium"
                   style={[styles.orderLineName, { color: theme.colors.onSecondary }]}
                 >
-                  {line.nameKo}
-                  {line.lessSpicy ? " 안 맵게" : ""}
+                  {line.nameCustomer}
                 </Text>
                 <Text
                   variant="titleMedium"
@@ -615,7 +560,7 @@ function FlippableOrderCard({
                     },
                   ]}
                 >
-                  {line.quantity}개
+                  x{line.quantity}
                 </Text>
               </View>
             ))}
@@ -626,6 +571,64 @@ function FlippableOrderCard({
                 <Text
                   variant="labelMedium"
                   style={{ color: theme.colors.onSecondaryContainer }}
+                >
+                  {translate(language, "orderCard.lessSpicyNote")}
+                </Text>
+              </View>
+            )}
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.orderCard,
+              { backgroundColor: theme.colors.primary, transform: [{ rotate: backRotate }] },
+            ]}
+          >
+            <Text
+              variant="labelLarge"
+              style={[styles.orderKicker, { color: theme.colors.onPrimary }]}
+            >
+              TO. 사장님
+            </Text>
+            <Text
+              variant="headlineSmall"
+              style={[styles.orderTitle, { color: theme.colors.onPrimary }]}
+            >
+              사장님, 주문할게요!
+            </Text>
+            {lines.map((line) => (
+              <View
+                key={line.id}
+                style={[styles.orderLine, { borderTopColor: theme.colors.onPrimary }]}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={[styles.orderLineName, { color: theme.colors.onPrimary }]}
+                >
+                  {line.nameKo}
+                  {line.lessSpicy ? " 안 맵게" : ""}
+                </Text>
+                <Text
+                  variant="titleMedium"
+                  style={[
+                    styles.qtyBadge,
+                    {
+                      color: theme.colors.onPrimaryContainer,
+                      backgroundColor: theme.colors.primaryContainer,
+                    },
+                  ]}
+                >
+                  {line.quantity}개
+                </Text>
+              </View>
+            ))}
+            {lines.some((line) => line.lessSpicy) && (
+              <View
+                style={[styles.notePill, { backgroundColor: theme.colors.primaryContainer }]}
+              >
+                <Text
+                  variant="labelMedium"
+                  style={{ color: theme.colors.onPrimaryContainer }}
                 >
                   덜 맵게 해주세요.
                 </Text>
