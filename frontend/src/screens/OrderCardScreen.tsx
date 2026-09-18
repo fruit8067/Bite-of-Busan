@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Checkbox, Chip, Divider, IconButton, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import AllergenGrid from "../components/AllergenGrid";
 import AllergyQuestionCard from "../components/AllergyQuestionCard";
 import AppButton from "../components/AppButton";
@@ -16,6 +17,7 @@ import {
 import { MenuItem } from "../types/menu";
 import { useLanguage } from "../i18n/LanguageContext";
 import { translate, UiLanguage } from "../i18n/strings";
+import { colors } from "../theme";
 
 type DisplayLanguage = UiLanguage;
 
@@ -335,11 +337,11 @@ export default function OrderCardScreen({
                           styles.optionPill,
                           {
                             borderColor: sel.lessSpicy
-                              ? theme.colors.primary
+                              ? theme.colors.error
                               : theme.colors.outline,
                             backgroundColor: sel.lessSpicy
-                              ? theme.colors.primaryContainer
-                              : "transparent",
+                              ? theme.colors.errorContainer
+                              : colors.white,
                           },
                         ]}
                       >
@@ -347,7 +349,7 @@ export default function OrderCardScreen({
                           variant="labelMedium"
                           style={{
                             color: sel.lessSpicy
-                              ? theme.colors.onPrimaryContainer
+                              ? theme.colors.error
                               : theme.colors.onSurfaceVariant,
                           }}
                         >
@@ -395,6 +397,7 @@ export default function OrderCardScreen({
           {t("order.selectedCount", { count: selectedCount })}
         </Text>
         <AppButton
+          variant="dark"
           disabled={selectedCount === 0}
           onPress={() => setCardVisible(true)}
           style={styles.makeCardButton}
@@ -483,23 +486,28 @@ function FlippableOrderCard({
   const flipAnim = useRef(new Animated.Value(0)).current;
   const [showVendor, setShowVendor] = useState(false);
 
+  // Matches frontendSample/busanbite-demo.html exactly: ONE card element,
+  // gradient background never changes — only the text content swaps (Korean
+  // for the staff-facing "vendor" view vs. the customer's chosen language).
+  // The content swap happens the instant the button is tapped (same as the
+  // demo's `renderCardView()` call), while a plain in-plane `rotate` (not a
+  // 3D flip) animates 0→180°: physically, you tap once and turn the whole
+  // phone 180° flat on the table so it now reads right-side-up to the person
+  // across from you — a real rotation you can see happening, not a cut.
   const flip = () => {
     const next = !showVendor;
     setShowVendor(next);
     Animated.timing(flipAnim, {
       toValue: next ? 180 : 0,
-      duration: 560,
+      duration: 600,
+      easing: Easing.inOut(Easing.cubic),
       useNativeDriver: false,
     }).start();
   };
 
-  const frontRotate = flipAnim.interpolate({
+  const rotate = flipAnim.interpolate({
     inputRange: [0, 180],
     outputRange: ["0deg", "180deg"],
-  });
-  const backRotate = flipAnim.interpolate({
-    inputRange: [0, 180],
-    outputRange: ["180deg", "360deg"],
   });
 
   return (
@@ -520,130 +528,56 @@ function FlippableOrderCard({
         style={styles.cardScroll}
         contentContainerStyle={styles.cardScrollContent}
       >
-        <Pressable onPress={flip} style={styles.flipArea}>
-          <Animated.View
-            style={[
-              styles.orderCard,
-              {
-                backgroundColor: theme.colors.secondary,
-                transform: [{ perspective: 1200 }, { rotateY: frontRotate }],
-              },
-            ]}
-          >
-            <Text
-              variant="labelLarge"
-              style={[styles.orderKicker, { color: theme.colors.onSecondary }]}
-            >
-              {translate(language, "orderCard.staffLabel")}
-            </Text>
-            <Text
-              variant="headlineSmall"
-              style={[styles.orderTitle, { color: theme.colors.onSecondary }]}
-            >
-              {translate(language, "orderCard.title")}
-            </Text>
+        <View style={styles.cardStage}>
+          <Animated.View style={[styles.orderCard, { transform: [{ rotate }] }]}>
+            <LinearGradient
+              colors={[colors.yellow, colors.yellowDeep]}
+              start={{ x: 0.12, y: 0.04 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.cardHead}>
+              <Text variant="labelLarge" style={[styles.orderKicker, { color: colors.paper }]}>
+                {showVendor ? "TO. 사장님" : translate(language, "orderCard.staffLabel")}
+              </Text>
+              <Text variant="headlineSmall" style={[styles.orderTitle, { color: colors.paper }]}>
+                {showVendor ? "사장님, 주문할게요!" : translate(language, "orderCard.title")}
+              </Text>
+            </View>
             {lines.map((line) => (
               <View
                 key={line.id}
-                style={[styles.orderLine, { borderTopColor: theme.colors.onSecondary }]}
+                style={[styles.orderLine, { borderTopColor: "rgba(255,255,255,0.22)" }]}
               >
-                <Text
-                  variant="titleMedium"
-                  style={[styles.orderLineName, { color: theme.colors.onSecondary }]}
-                >
-                  {line.nameCustomer}
+                <Text variant="titleMedium" style={[styles.orderLineName, { color: colors.paper }]}>
+                  {showVendor
+                    ? line.nameKo + (line.lessSpicy ? " 안 맵게" : "")
+                    : line.nameCustomer}
                 </Text>
                 <Text
                   variant="titleMedium"
                   style={[
                     styles.qtyBadge,
-                    {
-                      color: theme.colors.onSecondaryContainer,
-                      backgroundColor: theme.colors.secondaryContainer,
-                    },
+                    { color: colors.paper, backgroundColor: "rgba(255,255,255,0.22)" },
                   ]}
                 >
-                  x{line.quantity}
+                  {showVendor ? `${line.quantity}개` : `x${line.quantity}`}
                 </Text>
               </View>
             ))}
             {lines.some((line) => line.lessSpicy) && (
-              <View
-                style={[styles.notePill, { backgroundColor: theme.colors.secondaryContainer }]}
-              >
-                <Text
-                  variant="labelMedium"
-                  style={{ color: theme.colors.onSecondaryContainer }}
-                >
-                  {translate(language, "orderCard.lessSpicyNote")}
+              <View style={[styles.notePill, { backgroundColor: "rgba(255,255,255,0.18)" }]}>
+                <Text variant="labelMedium" style={{ color: colors.paper }}>
+                  {showVendor
+                    ? "덜 맵게 해주세요."
+                    : translate(language, "orderCard.lessSpicyNote")}
                 </Text>
               </View>
             )}
           </Animated.View>
+        </View>
 
-          <Animated.View
-            style={[
-              styles.orderCard,
-              {
-                backgroundColor: theme.colors.primary,
-                transform: [{ perspective: 1200 }, { rotateY: backRotate }],
-              },
-            ]}
-          >
-            <Text
-              variant="labelLarge"
-              style={[styles.orderKicker, { color: theme.colors.onPrimary }]}
-            >
-              TO. 사장님
-            </Text>
-            <Text
-              variant="headlineSmall"
-              style={[styles.orderTitle, { color: theme.colors.onPrimary }]}
-            >
-              사장님, 주문할게요!
-            </Text>
-            {lines.map((line) => (
-              <View
-                key={line.id}
-                style={[styles.orderLine, { borderTopColor: theme.colors.onPrimary }]}
-              >
-                <Text
-                  variant="titleMedium"
-                  style={[styles.orderLineName, { color: theme.colors.onPrimary }]}
-                >
-                  {line.nameKo}
-                  {line.lessSpicy ? " 안 맵게" : ""}
-                </Text>
-                <Text
-                  variant="titleMedium"
-                  style={[
-                    styles.qtyBadge,
-                    {
-                      color: theme.colors.onPrimaryContainer,
-                      backgroundColor: theme.colors.primaryContainer,
-                    },
-                  ]}
-                >
-                  {line.quantity}개
-                </Text>
-              </View>
-            ))}
-            {lines.some((line) => line.lessSpicy) && (
-              <View
-                style={[styles.notePill, { backgroundColor: theme.colors.primaryContainer }]}
-              >
-                <Text
-                  variant="labelMedium"
-                  style={{ color: theme.colors.onPrimaryContainer }}
-                >
-                  덜 맵게 해주세요.
-                </Text>
-              </View>
-            )}
-          </Animated.View>
-        </Pressable>
-
-        <AppButton onPress={flip} style={styles.flipButton}>
+        <AppButton variant="dark" onPress={flip} style={styles.flipButton}>
           {translate(
             language,
             showVendor ? "orderCard.flipHide" : "orderCard.flipShow"
@@ -845,16 +779,29 @@ const styles = StyleSheet.create({
     padding: 22,
     paddingBottom: 28,
   },
-  flipArea: {
-    height: 350,
+  cardStage: {
+    minHeight: 340,
+    alignItems: "center",
+    justifyContent: "center",
   },
   orderCard: {
-    position: "absolute",
     width: "100%",
-    height: "100%",
+    minHeight: 340,
+    overflow: "hidden",
     borderRadius: 22,
     padding: 24,
-    backfaceVisibility: "hidden",
+    shadowColor: colors.yellowDeep,
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  cardHead: {
+    paddingBottom: 16,
+    marginBottom: 4,
+    borderBottomWidth: 2,
+    borderBottomColor: "rgba(255,255,255,0.32)",
+    borderStyle: "dashed",
   },
   orderKicker: {
     opacity: 0.78,
@@ -862,7 +809,6 @@ const styles = StyleSheet.create({
   },
   orderTitle: {
     marginTop: 5,
-    marginBottom: 18,
   },
   orderLine: {
     flexDirection: "row",

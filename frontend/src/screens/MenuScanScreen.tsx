@@ -9,6 +9,7 @@ import { MenuScanError, scanMenu } from "../api/menuApi";
 import { deleteImageFromBlob, uploadImageToBlob } from "../api/uploadApi";
 import { MenuItem } from "../types/menu";
 import { useLanguage } from "../i18n/LanguageContext";
+import { colors } from "../theme";
 
 interface Props {
   onAnalyze: (restaurantName: string | null, items: MenuItem[]) => void;
@@ -166,7 +167,7 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
             </Text>
           </View>
 
-          <View style={[styles.scanFrame, { backgroundColor: theme.colors.surfaceVariant }]}>
+          <View style={[styles.scanFrame, { backgroundColor: colors.ink }]}>
             <View style={[styles.corner, styles.cornerTl, { borderColor: theme.colors.primary }]} />
             <View style={[styles.corner, styles.cornerTr, { borderColor: theme.colors.primary }]} />
             <View style={[styles.corner, styles.cornerBl, { borderColor: theme.colors.primary }]} />
@@ -191,31 +192,25 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
               <View
                 style={[
                   styles.menuBoard,
-                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+                  { backgroundColor: "#2a2018", borderColor: "#4a3d2c" },
                 ]}
               >
-                <Text
-                  variant="headlineSmall"
-                  style={[styles.boardTitle, { color: theme.colors.onSurface }]}
-                >
+                <Text variant="headlineSmall" style={[styles.boardTitle, { color: "#f2ead9" }]}>
                   자갈치 국밥집
                 </Text>
-                <View style={[styles.boardRule, { backgroundColor: theme.colors.outlineVariant }]} />
+                <View style={[styles.boardRule, { backgroundColor: "#4a3d2c" }]} />
                 {sampleMenuRows.map(([name, price]) => (
                   <View key={name} style={styles.boardRow}>
-                    <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
+                    <Text variant="titleMedium" style={{ color: "#f2ead9" }}>
                       {name}
                     </Text>
-                    <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                    <Text variant="labelMedium" style={{ color: "#d8c9a4" }}>
                       {price}
                     </Text>
                   </View>
                 ))}
-                <View style={[styles.boardRule, { backgroundColor: theme.colors.outlineVariant }]} />
-                <Text
-                  variant="bodySmall"
-                  style={[styles.boardFoot, { color: theme.colors.onSurfaceVariant }]}
-                >
+                <View style={[styles.boardRule, { backgroundColor: "#4a3d2c" }]} />
+                <Text variant="bodySmall" style={[styles.boardFoot, { color: "#8f7d5c" }]}>
                   포장 가능 · 카드 결제 가능
                 </Text>
               </View>
@@ -249,6 +244,7 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
           </View>
 
           <AppButton
+            variant="dark"
             onPress={analyze}
             disabled={!imageBlobUrl}
             loading={loading}
