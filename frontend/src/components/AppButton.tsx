@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useTheme } from "react-native-paper";
 
-type Variant = "filled" | "outlined" | "text" | "dark";
+type Variant = "filled" | "outlined" | "outlinedLight" | "text" | "dark";
 
 interface Props {
   children: ReactNode;
@@ -43,7 +43,11 @@ export default function AppButton({
         ? theme.colors.inverseSurface
         : "transparent";
   const borderColor =
-    variant === "outlined" ? theme.colors.outline : "transparent";
+    variant === "outlined"
+      ? theme.colors.outline
+      : variant === "outlinedLight"
+        ? "rgba(255,255,255,0.2)"
+        : "transparent";
   const textColor =
     variant === "filled"
       ? theme.colors.onPrimary
@@ -51,7 +55,9 @@ export default function AppButton({
         ? theme.colors.inverseOnSurface
         : variant === "outlined"
           ? theme.colors.onSurface
-          : theme.colors.primary;
+          : variant === "outlinedLight"
+            ? "#c9d2d8"
+            : theme.colors.primary;
 
   return (
     <Pressable

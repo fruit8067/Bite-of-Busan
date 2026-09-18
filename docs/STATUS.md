@@ -179,8 +179,15 @@ board, not a log. PM reads this before assigning new work.
     이번 스코프에서 손 안 댐 — 여전히 구버전 마젠타/네이비 하드코딩 색).
   - `npx tsc --noEmit`, `expo export --platform web` 클린. `npx expo start --web`로
     직접 띄워서 스캔 화면/결과 목록(통화·언어 칩, 알레르기 그리드)/주문카드 뒤집기
-    전부 스크린샷으로 데모와 대조 검증 완료. **미검증**: `expo export --platform
-    android`(시간 관계상 생략) — 다음에 네이티브 쪽 만질 때 한 번 돌려봐 주세요.
+    전부 스크린샷으로 데모와 대조 검증 완료.
+  - **`expo export --platform android` 확인 중 발견(제 변경과 무관한 기존 이슈)**:
+    Android 번들링이 `Unable to resolve module stream`으로 실패함 — `@vercel/blob/
+    client`(`src/api/uploadApi.ts`가 씀, `d8b71ad Restore Vercel Blob menu uploads`
+    커밋에서 추가됨, 이번 작업 이전부터 있던 코드)가 내부적으로 Node.js `stream`을
+    import하는데 Android 번들 타깃엔 브라우저용 폴리필이 안 걸림(웹은 되는데
+    android/native는 막힘). 이번 스코프(M3 폐기/샘플 매칭) 밖이라 손 안 댔습니다 —
+    metro resolver에 폴리필 alias를 추가하거나, blob 업로드 경로를 웹 전용으로 두는
+    등 결정이 필요해서 owner/frontend 판단이 필요합니다.
 
 ## Backend
 - [x] Express + TypeScript scaffold, `npm install` done, type-checks clean

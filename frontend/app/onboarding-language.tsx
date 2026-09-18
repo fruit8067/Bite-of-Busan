@@ -35,7 +35,7 @@ export default function OnboardingLanguageRoute() {
         {UI_LANGUAGES.map((option) => (
           <AppButton
             key={option.code}
-            variant={language === option.code ? "filled" : "outlined"}
+            variant={language === option.code ? "filled" : "outlinedLight"}
             onPress={() => choose(option.code)}
             style={styles.optionButton}
           >

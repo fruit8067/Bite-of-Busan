@@ -53,14 +53,14 @@ export default function AllergyQuestionCard() {
       </Text>
       <View style={styles.buttonRow}>
         <AppButton
-          variant={answer === "yes" ? "filled" : "outlined"}
+          variant={answer === "yes" ? "filled" : "outlinedLight"}
           onPress={() => setAnswer("yes")}
           style={styles.answerButton}
         >
           {t("allergen.yes")}
         </AppButton>
         <AppButton
-          variant={answer === "no" ? "filled" : "outlined"}
+          variant={answer === "no" ? "filled" : "outlinedLight"}
           onPress={() => setAnswer("no")}
           style={styles.answerButton}
         >
