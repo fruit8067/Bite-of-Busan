@@ -170,24 +170,6 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
         </Text>
       </View>
 
-      <View style={styles.modeSwitch}>
-        <View
-          style={[
-            styles.modeButton,
-            { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-          ]}
-        >
-          <Text variant="labelMedium" style={{ color: theme.colors.onPrimary }}>
-            {t("mode.eat")}
-          </Text>
-        </View>
-        <View style={[styles.modeButton, { borderColor: theme.colors.outline }]}>
-          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {t("mode.speak")}
-          </Text>
-        </View>
-      </View>
-
       <View style={styles.stepper}>
         <View style={[styles.dot, styles.dotActive, { backgroundColor: theme.colors.primary }]} />
         <View style={[styles.dot, { backgroundColor: theme.colors.surfaceVariant }]} />
@@ -350,17 +332,6 @@ const styles = StyleSheet.create({
   },
   brandSub: {
     marginTop: 2,
-  },
-  modeSwitch: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
-  },
-  modeButton: {
-    borderWidth: 1.4,
-    borderRadius: 100,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
   },
   stepper: {
     flexDirection: "row",
