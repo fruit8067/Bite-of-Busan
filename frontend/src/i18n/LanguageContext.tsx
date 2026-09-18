@@ -21,7 +21,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((stored) => {
-        if (stored === "en" || stored === "zh-TW") {
+        if (stored === "en" || stored === "zh-TW" || stored === "ja" || stored === "es") {
           setLanguageState(stored);
         }
       })
