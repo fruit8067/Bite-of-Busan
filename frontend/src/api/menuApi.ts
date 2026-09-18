@@ -51,11 +51,11 @@ function toMenuItem(item: ScanMenuItemResponse): MenuItem {
   };
 }
 
-export async function scanMenu(imageBase64: string): Promise<MenuScanResult> {
+export async function scanMenu(imageUrl: string): Promise<MenuScanResult> {
   const res = await fetch(`${API_BASE_URL}/menu/scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ imageBase64 }),
+    body: JSON.stringify({ imageUrl }),
   });
 
   const data = await res.json().catch(() => null);

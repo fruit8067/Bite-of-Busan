@@ -11,14 +11,27 @@ function stripDataUrlPrefix(imageBase64: string): string {
 export const menuRouter = Router();
 
 menuRouter.post("/scan", async (req, res) => {
-  const { imageBase64 } = req.body ?? {};
+  const { imageBase64, imageUrl } = req.body ?? {};
 
-  if (typeof imageBase64 !== "string" || imageBase64.length === 0) {
-    return res.status(400).json({ error: "imageBase64 is required" });
+  if (typeof imageUrl === "string" && imageUrl.length > 0) {
+    try {
+      const parsedUrl = new URL(imageUrl);
+      if (parsedUrl.protocol !== "https:") {
+        return res.status(400).json({ error: "imageUrl must use https" });
+      }
+    } catch {
+      return res.status(400).json({ error: "imageUrl must be a valid URL" });
+    }
+  } else if (typeof imageBase64 !== "string" || imageBase64.length === 0) {
+    return res.status(400).json({ error: "imageUrl is required" });
   }
 
   try {
-    const result = await scanMenuImage(stripDataUrlPrefix(imageBase64));
+    const result = await scanMenuImage(
+      imageUrl
+        ? { imageUrl }
+        : { imageBase64: stripDataUrlPrefix(imageBase64) }
+    );
     return res.json({
       restaurantName: result.restaurantName,
       items: result.items.map((item, index) => ({ id: index, ...item })),

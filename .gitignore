@@ -13,3 +13,6 @@ build/
 # frontend/assets/fonts/BusanFont_Provisional.ttf (already tracked there).
 /bFont_wProvisional_ttf.zip
 /bFont_wProvisional_ttf/
+
+.vercel
+.env*

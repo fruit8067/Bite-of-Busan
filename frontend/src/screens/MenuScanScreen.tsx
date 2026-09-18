@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Image, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Snackbar, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppButton from "../components/AppButton";
 import ChatBotOverlay from "../components/ChatBotOverlay";
 import { MenuScanError, scanMenu } from "../api/menuApi";
+import { deleteImageFromBlob, uploadImageToBlob } from "../api/uploadApi";
 import { MenuItem } from "../types/menu";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -15,10 +16,6 @@ interface Props {
 
 type PickSource = "camera" | "gallery";
 
-type PickerAssetWithFile = ImagePicker.ImagePickerAsset & {
-  file?: Blob;
-};
-
 const sampleMenuRows = [
   ["돼지국밥", "9,000원"],
   ["순대국밥", "9,000원"],
@@ -26,57 +23,25 @@ const sampleMenuRows = [
   ["수육(小)", "18,000원"],
 ];
 
-function stripDataUrlPrefix(value: string): string {
-  const commaIndex = value.indexOf(",");
-  return value.startsWith("data:") && commaIndex !== -1
-    ? value.slice(commaIndex + 1)
-    : value;
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (typeof FileReader === "undefined") {
-      reject(new Error("FileReader is not available in this runtime."));
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Failed to read image file."));
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(stripDataUrlPrefix(reader.result));
-      } else {
-        reject(new Error("Image file did not produce a base64 string."));
-      }
-    };
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function assetToBase64(asset: PickerAssetWithFile): Promise<string> {
-  if (asset.base64) return stripDataUrlPrefix(asset.base64);
-  if (asset.file) return blobToBase64(asset.file);
-
-  if (Platform.OS !== "web") {
-    const response = await fetch(asset.uri);
-    return blobToBase64(await response.blob());
-  }
-
-  throw new Error("The selected image could not be read.");
-}
-
 export default function MenuScanScreen({ onAnalyze }: Props) {
   const theme = useTheme();
   const { t } = useLanguage();
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
+  const cleanupBlob = (url: string | null) => {
+    if (url) {
+      void deleteImageFromBlob(url).catch(() => undefined);
+    }
+  };
+
   const clearImage = () => {
+    cleanupBlob(imageBlobUrl);
     setImageUri(null);
-    setImageBase64(null);
+    setImageBlobUrl(null);
     setFileName(null);
   };
 
@@ -110,32 +75,35 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
 
     if (result.canceled || !result.assets[0]) return;
 
-    const asset = result.assets[0] as PickerAssetWithFile;
+    const asset = result.assets[0];
 
     try {
-      const base64 = await assetToBase64(asset);
+      cleanupBlob(imageBlobUrl);
       setImageUri(asset.uri);
-      setImageBase64(base64);
       setFileName(asset.fileName ?? "menu photo");
+      const blobUrl = await uploadImageToBlob(asset.uri);
+      setImageBlobUrl(blobUrl);
     } catch {
       setImageUri(asset.uri);
-      setImageBase64(null);
+      setImageBlobUrl(null);
       setFileName(asset.fileName ?? "menu photo");
       setSnackbarMessage(t("scan.errorImageUnreadable"));
     }
   };
 
   const analyze = async () => {
-    if (!imageBase64) {
+    if (!imageBlobUrl) {
       setSnackbarMessage(t("scan.errorChooseImageFirst"));
       return;
     }
 
     setLoading(true);
     try {
-      const { restaurantName, items } = await scanMenu(imageBase64);
+      const { restaurantName, items } = await scanMenu(imageBlobUrl);
+      await deleteImageFromBlob(imageBlobUrl).catch(() => undefined);
       onAnalyze(restaurantName, items);
     } catch (err) {
+      await deleteImageFromBlob(imageBlobUrl).catch(() => undefined);
       if (err instanceof MenuScanError) {
         setSnackbarMessage(err.message);
       } else {
@@ -299,7 +267,7 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
 
           <AppButton
             onPress={analyze}
-            disabled={!imageBase64}
+            disabled={!imageBlobUrl}
             loading={loading}
             style={styles.analyzeButton}
           >
