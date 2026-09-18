@@ -188,6 +188,15 @@ board, not a log. PM reads this before assigning new work.
     android/native는 막힘). 이번 스코프(M3 폐기/샘플 매칭) 밖이라 손 안 댔습니다 —
     metro resolver에 폴리필 alias를 추가하거나, blob 업로드 경로를 웹 전용으로 두는
     등 결정이 필요해서 owner/frontend 판단이 필요합니다.
+  - **후속 수정 (owner 리포트: "언어 선택 화면·콩 알레르기 검사에서 검은 바탕에
+    검은 글자")** — 위 M3 폐기 작업에서 `AppButton`의 "outlined" variant를
+    흰색(`surface`) 카드 위에서만 검증했는데, 두 곳은 어두운 배경 위에 직접 쓰이고
+    있었음: `app/onboarding-language.tsx`(카드 없이 어두운 `stage` 배경 위에 바로
+    버튼), `AllergyQuestionCard`(카드 자체 배경이 `secondaryContainer`=ink로 어두움).
+    "outlined"는 `onSurface`(ink, 어두움) 텍스트라 어두운 배경과 겹쳐 안 보였음.
+    `AppButton`에 `outlinedLight` variant 추가(투명 배경 + 반투명 흰 테두리 + 밝은
+    회색 텍스트, 데모의 `.mode-btn` 비선택 스타일과 동일한 톤) — 두 화면의 미선택
+    버튼에 적용. 브라우저로 재검증(스크린샷) 완료, `tsc` 클린.
 
 ## Backend
 - [x] Express + TypeScript scaffold, `npm install` done, type-checks clean
