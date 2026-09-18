@@ -524,7 +524,10 @@ function FlippableOrderCard({
           <Animated.View
             style={[
               styles.orderCard,
-              { backgroundColor: theme.colors.secondary, transform: [{ rotate: frontRotate }] },
+              {
+                backgroundColor: theme.colors.secondary,
+                transform: [{ perspective: 1200 }, { rotateY: frontRotate }],
+              },
             ]}
           >
             <Text
@@ -581,7 +584,10 @@ function FlippableOrderCard({
           <Animated.View
             style={[
               styles.orderCard,
-              { backgroundColor: theme.colors.primary, transform: [{ rotate: backRotate }] },
+              {
+                backgroundColor: theme.colors.primary,
+                transform: [{ perspective: 1200 }, { rotateY: backRotate }],
+              },
             ]}
           >
             <Text
