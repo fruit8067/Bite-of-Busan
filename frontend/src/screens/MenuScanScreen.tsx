@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Image, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Snackbar, Text } from "react-native-paper";
+import { Snackbar, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AppButton from "../components/AppButton";
 import ChatBotOverlay from "../components/ChatBotOverlay";
 import { MenuScanError, scanMenu } from "../api/menuApi";
 import { MenuItem } from "../types/menu";
@@ -65,6 +66,7 @@ async function assetToBase64(asset: PickerAssetWithFile): Promise<string> {
 }
 
 export default function MenuScanScreen({ onAnalyze }: Props) {
+  const theme = useTheme();
   const { t } = useLanguage();
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -145,59 +147,79 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.stage} edges={["bottom", "left", "right"]}>
-      <View style={styles.glowMagenta} />
-      <View style={styles.glowBlue} />
+    <SafeAreaView
+      style={[styles.stage, { backgroundColor: theme.colors.background }]}
+      edges={["bottom", "left", "right"]}
+    >
+      <View
+        style={[styles.glow, styles.glowTopLeft, { backgroundColor: theme.colors.primary }]}
+      />
+      <View
+        style={[styles.glow, styles.glowBottomRight, { backgroundColor: theme.colors.secondary }]}
+      />
 
       <View style={styles.brand}>
-        <Text variant="displaySmall" style={styles.brandTitle}>
+        <Text variant="displaySmall" style={{ color: theme.colors.primary }}>
           부산한입
         </Text>
-        <Text variant="bodySmall" style={styles.brandSub}>
+        <Text
+          variant="bodySmall"
+          style={[styles.brandSub, { color: theme.colors.onSurfaceVariant }]}
+        >
           {t("brand.subtitle")}
         </Text>
       </View>
 
       <View style={styles.modeSwitch}>
-        <View style={[styles.modeButton, styles.modeActive]}>
-          <Text variant="labelMedium" style={styles.modeActiveText}>
+        <View
+          style={[
+            styles.modeButton,
+            { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+          ]}
+        >
+          <Text variant="labelMedium" style={{ color: theme.colors.onPrimary }}>
             {t("mode.eat")}
           </Text>
         </View>
-        <View style={styles.modeButton}>
-          <Text variant="labelMedium" style={styles.modeText}>
+        <View style={[styles.modeButton, { borderColor: theme.colors.outline }]}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {t("mode.speak")}
           </Text>
         </View>
       </View>
 
       <View style={styles.stepper}>
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={styles.dot} />
-        <View style={styles.dot} />
+        <View style={[styles.dot, styles.dotActive, { backgroundColor: theme.colors.primary }]} />
+        <View style={[styles.dot, { backgroundColor: theme.colors.surfaceVariant }]} />
+        <View style={[styles.dot, { backgroundColor: theme.colors.surfaceVariant }]} />
       </View>
 
-      <View style={styles.phone}>
-        <View style={styles.notch} />
+      <View
+        style={[
+          styles.phone,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline },
+        ]}
+      >
+        <View style={[styles.notch, { backgroundColor: theme.colors.outline }]} />
         <ScrollView
           style={styles.phoneScreen}
           contentContainerStyle={styles.phoneContent}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.topbar}>
-            <Text variant="labelMedium" style={styles.topbarLabel}>
+            <Text variant="labelMedium" style={{ color: theme.colors.onSurface }}>
               {t("scan.topbarLabel")}
             </Text>
-            <Text variant="labelSmall" style={styles.topbarMuted}>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
               {t("scan.liveBackend")}
             </Text>
           </View>
 
-          <View style={styles.scanFrame}>
-            <View style={[styles.corner, styles.cornerTl]} />
-            <View style={[styles.corner, styles.cornerTr]} />
-            <View style={[styles.corner, styles.cornerBl]} />
-            <View style={[styles.corner, styles.cornerBr]} />
+          <View style={[styles.scanFrame, { backgroundColor: theme.colors.surfaceVariant }]}>
+            <View style={[styles.corner, styles.cornerTl, { borderColor: theme.colors.primary }]} />
+            <View style={[styles.corner, styles.cornerTr, { borderColor: theme.colors.primary }]} />
+            <View style={[styles.corner, styles.cornerBl, { borderColor: theme.colors.primary }]} />
+            <View style={[styles.corner, styles.cornerBr, { borderColor: theme.colors.primary }]} />
             {imageUri ? (
               <>
                 <Image source={{ uri: imageUri }} style={styles.previewImage} />
@@ -205,84 +227,84 @@ export default function MenuScanScreen({ onAnalyze }: Props) {
                   onPress={clearImage}
                   style={({ pressed }) => [
                     styles.retakeBadge,
+                    { backgroundColor: theme.colors.inverseSurface },
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text variant="labelMedium" style={styles.retakeBadgeText}>
+                  <Text variant="labelMedium" style={{ color: theme.colors.inverseOnSurface }}>
                     {t("scan.retake")}
                   </Text>
                 </Pressable>
               </>
             ) : (
-              <View style={styles.menuBoard}>
-                <Text variant="headlineSmall" style={styles.boardTitle}>
+              <View
+                style={[
+                  styles.menuBoard,
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+                ]}
+              >
+                <Text
+                  variant="headlineSmall"
+                  style={[styles.boardTitle, { color: theme.colors.onSurface }]}
+                >
                   자갈치 국밥집
                 </Text>
-                <View style={styles.boardRule} />
+                <View style={[styles.boardRule, { backgroundColor: theme.colors.outlineVariant }]} />
                 {sampleMenuRows.map(([name, price]) => (
                   <View key={name} style={styles.boardRow}>
-                    <Text variant="titleMedium" style={styles.boardName}>
+                    <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
                       {name}
                     </Text>
-                    <Text variant="labelMedium" style={styles.boardPrice}>
+                    <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                       {price}
                     </Text>
                   </View>
                 ))}
-                <View style={styles.boardRule} />
-                <Text variant="bodySmall" style={styles.boardFoot}>
+                <View style={[styles.boardRule, { backgroundColor: theme.colors.outlineVariant }]} />
+                <Text
+                  variant="bodySmall"
+                  style={[styles.boardFoot, { color: theme.colors.onSurfaceVariant }]}
+                >
                   포장 가능 · 카드 결제 가능
                 </Text>
               </View>
             )}
           </View>
 
-          <Text variant="bodySmall" style={styles.scanHint}>
+          <Text
+            variant="bodySmall"
+            style={[styles.scanHint, { color: theme.colors.onSurfaceVariant }]}
+          >
             {fileName
               ? t("scan.hintChosen", { fileName })
               : t("scan.hintEmpty")}
           </Text>
 
           <View style={styles.actionRow}>
-            <Pressable
+            <AppButton
+              variant="outlined"
               onPress={() => pickImage("camera")}
-              style={({ pressed }) => [
-                styles.secondaryAction,
-                pressed && styles.pressed,
-              ]}
+              style={styles.actionButton}
             >
-              <Text variant="labelLarge" style={styles.secondaryActionText}>
-                {t("scan.actionCamera")}
-              </Text>
-            </Pressable>
-            <Pressable
+              {t("scan.actionCamera")}
+            </AppButton>
+            <AppButton
+              variant="outlined"
               onPress={() => pickImage("gallery")}
-              style={({ pressed }) => [
-                styles.secondaryAction,
-                pressed && styles.pressed,
-              ]}
+              style={styles.actionButton}
             >
-              <Text variant="labelLarge" style={styles.secondaryActionText}>
-                {t("scan.actionGallery")}
-              </Text>
-            </Pressable>
+              {t("scan.actionGallery")}
+            </AppButton>
           </View>
 
-          <Pressable
+          <AppButton
             onPress={analyze}
-            disabled={!imageBase64 || loading}
-            style={({ pressed }) => [
-              styles.shutter,
-              (!imageBase64 || loading) && styles.disabled,
-              pressed && imageBase64 && !loading && styles.pressed,
-            ]}
+            disabled={!imageBase64}
+            loading={loading}
+            style={styles.analyzeButton}
           >
-            <View style={styles.shutterInner}>
-              <Text variant="labelLarge" style={styles.shutterText}>
-                {loading ? t("scan.analyzing") : t("scan.analyze")}
-              </Text>
-            </View>
-          </Pressable>
+            {loading ? t("scan.analyzing") : t("scan.analyze")}
+          </AppButton>
         </ScrollView>
         <ChatBotOverlay />
       </View>
@@ -302,40 +324,31 @@ const styles = StyleSheet.create({
   stage: {
     flex: 1,
     alignItems: "center",
-    backgroundColor: "#0d0a1f",
     paddingHorizontal: 16,
     paddingTop: 28,
   },
-  glowMagenta: {
+  glow: {
     position: "absolute",
+    borderRadius: 120,
+    opacity: 0.16,
+  },
+  glowTopLeft: {
     left: -70,
     top: -40,
     width: 220,
     height: 220,
-    borderRadius: 110,
-    backgroundColor: "rgba(236,0,140,0.18)",
   },
-  glowBlue: {
-    position: "absolute",
+  glowBottomRight: {
     right: -70,
     bottom: -40,
     width: 240,
     height: 240,
-    borderRadius: 120,
-    backgroundColor: "rgba(0,149,217,0.18)",
   },
   brand: {
     alignItems: "center",
     marginBottom: 12,
   },
-  brandTitle: {
-    color: "#EC008C",
-    textShadowColor: "rgba(236,0,140,0.35)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 14,
-  },
   brandSub: {
-    color: "#b9c2c9",
     marginTop: 2,
   },
   modeSwitch: {
@@ -345,20 +358,9 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     borderWidth: 1.4,
-    borderColor: "rgba(255,255,255,0.22)",
     borderRadius: 100,
     paddingHorizontal: 18,
     paddingVertical: 8,
-  },
-  modeActive: {
-    backgroundColor: "#EC008C",
-    borderColor: "#EC008C",
-  },
-  modeText: {
-    color: "#c9d2d8",
-  },
-  modeActiveText: {
-    color: "#1a1030",
   },
   stepper: {
     flexDirection: "row",
@@ -369,11 +371,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.18)",
   },
   dotActive: {
     width: 22,
-    backgroundColor: "#EC008C",
   },
   phone: {
     flex: 1,
@@ -382,9 +382,7 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     maxHeight: 720,
     borderRadius: 46,
-    backgroundColor: "#fbf8ff",
     borderWidth: 10,
-    borderColor: "#06090d",
     overflow: "hidden",
   },
   notch: {
@@ -397,7 +395,6 @@ const styles = StyleSheet.create({
     marginLeft: -60,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    backgroundColor: "#06090d",
   },
   phoneScreen: {
     flex: 1,
@@ -413,17 +410,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  topbarLabel: {
-    color: "#1a1030",
-  },
-  topbarMuted: {
-    color: "#8b7fa0",
-  },
   scanFrame: {
     flex: 1,
     minHeight: 310,
     borderRadius: 20,
-    backgroundColor: "#191410",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -433,7 +423,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 28,
     height: 28,
-    borderColor: "#EC008C",
     zIndex: 2,
   },
   cornerTl: {
@@ -472,25 +461,19 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: "rgba(6,9,13,0.72)",
-  },
-  retakeBadgeText: {
-    color: "#fbf8ff",
   },
   menuBoard: {
     width: "78%",
     borderRadius: 8,
-    backgroundColor: "#2a2018",
+    borderWidth: 1,
     padding: 18,
   },
   boardTitle: {
-    color: "#f2ead9",
     textAlign: "center",
     marginBottom: 12,
   },
   boardRule: {
     height: 1,
-    backgroundColor: "#4a3d2c",
     marginVertical: 8,
   },
   boardRow: {
@@ -499,19 +482,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 6,
   },
-  boardName: {
-    color: "#f2ead9",
-  },
-  boardPrice: {
-    color: "#d8c9a4",
-  },
   boardFoot: {
-    color: "#d8c9a4",
     textAlign: "center",
     marginTop: 8,
   },
   scanHint: {
-    color: "#8b7fa0",
     textAlign: "center",
     marginBottom: 12,
   },
@@ -520,42 +495,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 14,
   },
-  secondaryAction: {
+  actionButton: {
     flex: 1,
-    alignItems: "center",
-    borderRadius: 100,
-    borderWidth: 1.4,
-    borderColor: "#e4d9f5",
-    backgroundColor: "#ffffff",
-    paddingVertical: 10,
   },
-  secondaryActionText: {
-    color: "#1a1030",
-  },
-  shutter: {
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
-    borderColor: "#1a1030",
-    backgroundColor: "#ffffff",
-  },
-  shutterInner: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: "#58228F",
-  },
-  shutterText: {
-    color: "#ffffff",
-  },
-  disabled: {
-    opacity: 0.42,
+  analyzeButton: {
+    alignSelf: "stretch",
   },
   pressed: {
     transform: [{ scale: 0.97 }],

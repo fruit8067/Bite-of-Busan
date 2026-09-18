@@ -28,6 +28,72 @@ board, not a log. PM reads this before assigning new work.
 - [x] **Allergen icon grid** (replaces the old "AI-estimated" caption-only approach, per `docs/PRODUCT.md`/demo) — `src/data/allergens.ts` (8 categories: pork/shellfish/wheat-gluten/dairy/peanut/soy/egg/buckwheat, each with emoji icon + keyword list used to match backend's free-text `allergens: string[]` — a frontend-only heuristic, not a contract change) + `src/components/AllergenGrid.tsx` (4-column grid, present-vs-absent highlighting via `errorContainer`/`surfaceVariant`). Each item card now has an "Allergy info (AI-estimated) ▾/▴" toggle instead of the old always-visible caption; emoji icons sidestep the earlier-reported web icon-font ("small box") issue entirely since they render as text, not glyphs from a font that needs loading.
 - [x] Item cards restructured to match the demo's visual hierarchy: Korean name is now the large primary line (`titleLarge`, brand display font), English/Chinese translations secondary, price line added below.
 - [x] `npx tsc --noEmit` clean, `expo export` clean for both `--platform web` and `--platform android` throughout all of the above.
+- [x] **지금 증분 3건 완료** (`docs/PRODUCT.md`/`docs/TASKS.md` "owner 지적 3건"):
+  1. **UI 다국어 지원** — 커스텀 컨텍스트 기반 i18n (`src/i18n/strings.ts` en/zh-TW 사전,
+     `src/i18n/LanguageContext.tsx` — 별도 라이브러리 없이 훅+Context, `AsyncStorage`로
+     `busanbite.uiLanguage` 영속화). 첫 실행 시 `app/onboarding-language.tsx`(신규 M3 화면,
+     `AppButton`/theme 토큰만 사용 — `MenuScanScreen`/`OrderCardScreen`과 달리 하드코딩 색 없음)로
+     리다이렉트, 선택 후 저장하고 `/`로 복귀. `app/index.tsx`가 게이트 역할(`ready`/`language`
+     확인 후 `<Redirect>`). `MenuScanScreen`/`OrderCardScreen`/`AllergenGrid`/
+     `AllergyQuestionCard`/`currency.ts`의 모든 버튼·라벨·힌트·에러 메시지를 키로 교체.
+     **예외 그대로 유지**: 주문카드 뒷면 한국어 문장, `AllergyQuestionCard`의 "땅콩
+     들어가나요?" 질문은 UI 언어와 무관하게 항상 한국어 고정(사장님용). 카드 앞면(고객용
+     문구: TO. STAFF/老闆, flip 버튼, edit 버튼)은 화면 자체의 콘텐츠-언어 토글(en/繁中,
+     `OrderCardScreen`의 기존 언어 칩)을 따르도록 `translate(lang, key)` 헬퍼로 분리 — 이
+     과정에서 기존 버그 하나 발견/수정: `FlippableOrderCard`의 `edit` 필드가 en/zh-TW 둘 다
+     하드코딩된 한국어 "메뉴 수정"였음(번역 안 됨) → 이번에 정식으로 "Edit menu"/"編輯菜單"로
+     분리.
+  2. **가게 이름 입력 필드 제거** — `MenuScanScreen`에서 `TextInput` 완전 삭제,
+     `src/api/menuApi.ts`의 `scanMenu()`는 이제 `imageBase64`만 보내고
+     `{ restaurantName, items }`를 반환(백엔드의 stateless 리팩터 이후 실제 계약과 이미 일치 —
+     `docs/API_CONTRACT.md` 최신본 확인함). `OrderCardScreen`에 `restaurantName` prop 추가,
+     "{가게}의 메뉴예요" / 이름 없으면 "이 가게의 메뉴예요" 문구 표시(`ScanResultContext`도
+     `restaurantName: string | null` 허용하도록 타입 수정).
+  3. **재촬영 기능** — 사진 미리보기 위에 "✕ Retake" 배지 버튼 추가, 누르면 `imageUri`/
+     `imageBase64`/`fileName` 초기화하고 다시 촬영/갤러리 선택 화면으로.
+  - `npx tsc --noEmit`, `expo export`(web+android) 모두 클린. 온보딩→스캔→주문카드→
+    뒤집기카드 전체 플로우를 `npx expo start --web`로 직접 띄워서 브라우저로 검증
+    (언어 선택, 필드 제거, 모든 번역 라벨, restaurant 문구, allergy 카드까지 스크린샷 확인).
+  - **참고/미해결**: `MenuScanScreen`/`OrderCardScreen`은 여전히 데모 재현용 하드코딩 색
+    팔레트(마젠타/네이비 글로우, `#EC008C` 등)를 쓰고 있어 `frontend/CLAUDE.md`의 "테마 토큰만
+    사용" 원칙과 어긋남 — `theme.ts`/`AppButton`/`AppCard`는 정상인데 이 두 화면만 그 전
+    "데모 모양 재현" 작업 때부터 별도 하드코딩 스타일 시트를 씀. 이번 작업 범위 밖이라
+    손대지 않았고, PM/owner 판단 필요하면 알려주세요.
+  - 브라우저 검증 중 발견한 기존(내 변경과 무관한) 이슈: 주문카드 뒤집기 애니메이션이
+    `rotate`(2D)를 써서 웹에서 뒷면이 좌우반전된 채 앞면과 겹쳐 보임(`backfaceVisibility`가
+    react-native-web에서 완전히 적용 안 되는 것으로 보임) — 네이티브에서 재현되는지는 확인
+    못함(에뮬레이터 없음). 급한 건 아니지만 다음에 카드 쪽 손댈 때 참고해주세요.
+- [x] **색상 통일 완료** (`docs/TASKS.md` "owner 결정 — 색상 통일", 위에서 제가 남긴
+  하드코딩 색 지적에 대한 오너 결정) — `MenuScanScreen.tsx`/`OrderCardScreen.tsx`에서
+  `#EC008C`(마젠타)/`#003795`/`#58228F` 등 하드코딩 hex를 전부 제거하고 `useTheme()`의
+  `theme.colors.*` 토큰으로 교체:
+  - 주요 CTA(촬영/갤러리/Analyze/Create Order Card/flip 버튼)는 `AppButton`으로 교체.
+    `AppButton`이 이미 `loading` prop을 지원해서 Analyze 버튼의 로딩 텍스트 스와핑 로직도
+    같이 단순화됨(원형 셔터 버튼 모양은 포기하고 일반 pill 버튼으로 통일 — `AppButton`이
+    원형을 지원하지 않아서 모양보다 컴포넌트 재사용/토큰 준수 쪽을 우선했습니다).
+  - 스캔결과 항목 카드는 `AppCard`로 교체(선택 시 `primaryContainer`/`primary` 테두리).
+  - 배경 글로우/브랜드 타이틀/모드 스위치/스테퍼 점/폰 프레임/노치/스캔 프레임/코너
+    브래킷/메뉴판 목업/알레르기 토글/가격 등 화면 전체 색상을 `primary`/`secondary`/
+    `surface`/`surfaceVariant`/`outline`/`onSurface(Variant)` 토큰으로 재매핑 — 라이트/
+    다크 양쪽에서 자동으로 맞는 색이 나옵니다(이전엔 다크 배경 고정).
+  - 주문카드 앞/뒷면(뒤집기 카드)은 애니메이션(`Animated.View` + `rotate`) 때문에
+    `AppCard`로 감쌀 수 없어서(정적 View만 지원) 예외적으로 `Animated.View`를 유지하되
+    배경은 `theme.colors.primary`(앞면)/`theme.colors.secondary`(뒷면)로, 텍스트는
+    `onPrimary`/`onSecondary`로 교체 — 부산블루 두 시드 색이 정확히 앞/뒷면 구분에
+    맞아떨어졌습니다.
+  - "덜 맵게" 인라인 토글 필/수량 스테퍼는 `Chip`/`TextInput`/`Snackbar`와 같이 "그대로
+    둘 것" 목록에 없었지만 시각적 비중이 작아 컴포넌트 교체 대신 토큰 색상만 적용.
+  - `Chip`(언어/통화 선택)에 하드코딩됐던 `backgroundColor: "#ffffff"` 오버라이드 제거 —
+    Paper의 M3 기본 Chip 스타일 그대로 사용.
+  - **범위 밖으로 남겨둔 것(명시적으로 지시받은 파일만 작업)**: `ChatBotOverlay.tsx`는
+    지시가 `MenuScanScreen.tsx`/`OrderCardScreen.tsx`로 특정돼 있었고 `docs/PRODUCT.md`
+    로드맵상 v1 범위 밖(AI 챗봇) 기능이라 손대지 않음 — 여전히 마젠타/남색 하드코딩
+    색을 씁니다. 필요하면 알려주세요.
+  - "말하기" 모드 스위치 버튼: 판단을 맡겨주셔서 그대로 뒀습니다(원래도 onPress 없이
+    비활성 표시만 하던 버튼이라 숨기지 않아도 헷갈릴 위험이 적다고 판단).
+  - `npx tsc --noEmit`, `expo export`(web+android) 클린. 브라우저로 두 화면(스캔, 선택
+    목록/선택된 카드, 뒤집기 카드, 알레르기 카드) 전부 재검증 — 마젠타/남색 완전히
+    사라지고 부산블루 계열로 통일된 것 스크린샷으로 확인.
 
 **코디네이팅 세션이 발견/수정한 버그 2건 (2026-09-18, owner가 웹 빌드를 열었는데 무한 흰 화면):**
 1. `src/components/ScreenContainer.tsx` — `SafeAreaView`(react-native-safe-

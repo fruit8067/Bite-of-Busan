@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Checkbox, Chip, Divider, IconButton, Text } from "react-native-paper";
+import { Checkbox, Chip, Divider, IconButton, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AllergenGrid from "../components/AllergenGrid";
 import AllergyQuestionCard from "../components/AllergyQuestionCard";
+import AppButton from "../components/AppButton";
+import AppCard from "../components/AppCard";
 import ChatBotOverlay from "../components/ChatBotOverlay";
 import {
   CURRENCIES,
@@ -89,6 +91,7 @@ export default function OrderCardScreen({
   restaurantName,
   onBackToScan,
 }: Props) {
+  const theme = useTheme();
   const { t, language: uiLanguage } = useLanguage();
   const [selection, setSelection] = useState<Selection>(() =>
     buildInitialSelection(items)
@@ -158,19 +161,25 @@ export default function OrderCardScreen({
     <StageShell step={1}>
       <View style={styles.topbar}>
         <Pressable onPress={onBackToScan}>
-          <Text variant="labelMedium" style={styles.backText}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {t("order.backToScan")}
           </Text>
         </Pressable>
-        <Text variant="labelMedium" style={styles.topbarLabel}>
+        <Text variant="labelMedium" style={{ color: theme.colors.onSurface }}>
           {t("order.topbarLabel")}
         </Text>
-        <Text variant="labelMedium" style={styles.topbarSpacer}>
+        <Text
+          variant="labelMedium"
+          style={[styles.topbarSpacer, { color: theme.colors.onSurfaceVariant }]}
+        >
           {selectedQuantity}
         </Text>
       </View>
 
-      <Text variant="bodySmall" style={styles.restaurantLabel}>
+      <Text
+        variant="bodySmall"
+        style={[styles.restaurantLabel, { color: theme.colors.onSurfaceVariant }]}
+      >
         {restaurantLabel}
       </Text>
 
@@ -186,7 +195,6 @@ export default function OrderCardScreen({
               compact
               selected={language === lang.code}
               onPress={() => setLanguage(lang.code)}
-              style={styles.sampleChip}
             >
               {lang.label}
             </Chip>
@@ -203,7 +211,6 @@ export default function OrderCardScreen({
               compact
               selected={currency === c.code}
               onPress={() => setCurrency(c.code)}
-              style={styles.sampleChip}
             >
               {c.label}
             </Chip>
@@ -221,11 +228,14 @@ export default function OrderCardScreen({
           const krwLabel = currency !== "KRW" ? krwSubLabel(item.priceKrw) : null;
 
           return (
-            <View
+            <AppCard
               key={item.id}
               style={[
                 styles.itemCard,
-                selected && styles.itemCardSelected,
+                selected && {
+                  borderColor: theme.colors.primary,
+                  backgroundColor: theme.colors.primaryContainer,
+                },
                 { opacity: 1 - index * 0.02 },
               ]}
             >
@@ -235,44 +245,67 @@ export default function OrderCardScreen({
                   onPress={() => toggleSelected(item.id)}
                 />
                 <View style={styles.itemNames}>
-                  <Text variant="titleLarge" style={styles.itemKo}>
+                  <Text variant="titleLarge" style={{ color: theme.colors.onSurface }}>
                     {item.nameKo}
                   </Text>
-                  <Text variant="bodySmall" style={styles.itemTranslated}>
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.itemTranslated, { color: theme.colors.primary }]}
+                  >
                     {translatedName(item, language)}
                   </Text>
-                  <Text variant="labelLarge" style={styles.itemPrice}>
+                  <Text
+                    variant="labelLarge"
+                    style={[styles.itemPrice, { color: theme.colors.onSurface }]}
+                  >
                     {formatPrice(item.priceKrw, currency, t("order.priceNotListed"))}
                     {krwLabel ? ` · ${krwLabel}` : ""}
                   </Text>
                 </View>
                 <View style={styles.spiceBox}>
-                  <Text variant="bodySmall" style={styles.spiceIcon}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
                     {"🌶️".repeat(item.spiceLevel || 0) || t("order.spiceNone")}
                   </Text>
-                  <Text variant="labelSmall" style={styles.spiceLabel}>
+                  <Text
+                    variant="labelSmall"
+                    style={[styles.spiceLabel, { color: theme.colors.onSurfaceVariant }]}
+                  >
                     {spiceLabels[item.spiceLevel]}
                   </Text>
                 </View>
               </View>
 
-              <Text variant="bodySmall" style={styles.description}>
+              <Text
+                variant="bodySmall"
+                style={[styles.description, { color: theme.colors.onSurfaceVariant }]}
+              >
                 {translatedDescription(item, language)}
               </Text>
 
               {item.howToEat ? (
-                <View style={styles.howtoBox}>
-                  <Text variant="labelSmall" style={styles.howtoLabel}>
+                <View
+                  style={[styles.howtoBox, { borderTopColor: theme.colors.outlineVariant }]}
+                >
+                  <Text
+                    variant="labelSmall"
+                    style={[styles.howtoLabel, { color: theme.colors.onSurface }]}
+                  >
                     {t("order.howToEatLabel")}
                   </Text>
-                  <Text variant="bodySmall" style={styles.howtoText}>
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.howtoText, { color: theme.colors.onSurfaceVariant }]}
+                  >
                     {item.howToEat}
                   </Text>
                 </View>
               ) : null}
 
               <Pressable onPress={() => toggleAllergyOpen(item.id)}>
-                <Text variant="labelMedium" style={styles.allergyToggle}>
+                <Text
+                  variant="labelMedium"
+                  style={[styles.allergyToggle, { color: theme.colors.primary }]}
+                >
                   {sel.allergyOpen
                     ? t("order.allergyHide")
                     : t("order.allergyShow")}
@@ -289,15 +322,23 @@ export default function OrderCardScreen({
                         onPress={() => toggleLessSpicy(item.id)}
                         style={[
                           styles.optionPill,
-                          sel.lessSpicy && styles.optionPillOn,
+                          {
+                            borderColor: sel.lessSpicy
+                              ? theme.colors.primary
+                              : theme.colors.outline,
+                            backgroundColor: sel.lessSpicy
+                              ? theme.colors.primaryContainer
+                              : "transparent",
+                          },
                         ]}
                       >
                         <Text
                           variant="labelMedium"
-                          style={[
-                            styles.optionText,
-                            sel.lessSpicy && styles.optionTextOn,
-                          ]}
+                          style={{
+                            color: sel.lessSpicy
+                              ? theme.colors.onPrimaryContainer
+                              : theme.colors.onSurfaceVariant,
+                          }}
                         >
                           {t("order.lessSpicy")}
                         </Text>
@@ -312,7 +353,10 @@ export default function OrderCardScreen({
                         size={16}
                         onPress={() => changeQuantity(item.id, -1)}
                       />
-                      <Text variant="titleMedium" style={styles.qtyText}>
+                      <Text
+                        variant="titleMedium"
+                        style={[styles.qtyText, { color: theme.colors.onSurface }]}
+                      >
                         {sel.quantity}
                       </Text>
                       <IconButton
@@ -325,27 +369,27 @@ export default function OrderCardScreen({
                   </View>
                 </>
               )}
-            </View>
+            </AppCard>
           );
         })}
       </ScrollView>
 
-      <View style={styles.bottomBar}>
-        <Text variant="bodySmall" style={styles.countText}>
+      <View
+        style={[
+          styles.bottomBar,
+          { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.outlineVariant },
+        ]}
+      >
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
           {t("order.selectedCount", { count: selectedCount })}
         </Text>
-        <Pressable
+        <AppButton
           disabled={selectedCount === 0}
           onPress={() => setCardVisible(true)}
-          style={[
-            styles.makeCardButton,
-            selectedCount === 0 && styles.disabled,
-          ]}
+          style={styles.makeCardButton}
         >
-          <Text variant="labelLarge" style={styles.makeCardText}>
-            {t("order.makeCard")}
-          </Text>
-        </Pressable>
+          {t("order.makeCard")}
+        </AppButton>
       </View>
     </StageShell>
   );
@@ -358,27 +402,43 @@ function StageShell({
   children: React.ReactNode;
   step: number;
 }) {
+  const theme = useTheme();
   const { t } = useLanguage();
   return (
-    <SafeAreaView style={styles.stage} edges={["bottom", "left", "right"]}>
-      <View style={styles.glowMagenta} />
-      <View style={styles.glowBlue} />
+    <SafeAreaView
+      style={[styles.stage, { backgroundColor: theme.colors.background }]}
+      edges={["bottom", "left", "right"]}
+    >
+      <View
+        style={[styles.glow, styles.glowTopLeft, { backgroundColor: theme.colors.primary }]}
+      />
+      <View
+        style={[styles.glow, styles.glowBottomRight, { backgroundColor: theme.colors.secondary }]}
+      />
       <View style={styles.brand}>
-        <Text variant="displaySmall" style={styles.brandTitle}>
+        <Text variant="displaySmall" style={{ color: theme.colors.primary }}>
           부산한입
         </Text>
-        <Text variant="bodySmall" style={styles.brandSub}>
+        <Text
+          variant="bodySmall"
+          style={[styles.brandSub, { color: theme.colors.onSurfaceVariant }]}
+        >
           {t("brand.subtitle")}
         </Text>
       </View>
       <View style={styles.modeSwitch}>
-        <View style={[styles.modeButton, styles.modeActive]}>
-          <Text variant="labelMedium" style={styles.modeActiveText}>
+        <View
+          style={[
+            styles.modeButton,
+            { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+          ]}
+        >
+          <Text variant="labelMedium" style={{ color: theme.colors.onPrimary }}>
             {t("mode.eat")}
           </Text>
         </View>
-        <View style={styles.modeButton}>
-          <Text variant="labelMedium" style={styles.modeText}>
+        <View style={[styles.modeButton, { borderColor: theme.colors.outline }]}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {t("mode.speak")}
           </Text>
         </View>
@@ -389,14 +449,26 @@ function StageShell({
             key={i}
             style={[
               styles.dot,
+              {
+                backgroundColor:
+                  i === step
+                    ? theme.colors.primary
+                    : i < step
+                      ? theme.colors.secondaryContainer
+                      : theme.colors.surfaceVariant,
+              },
               i === step && styles.dotActive,
-              i < step && styles.dotDone,
             ]}
           />
         ))}
       </View>
-      <View style={styles.phone}>
-        <View style={styles.notch} />
+      <View
+        style={[
+          styles.phone,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline },
+        ]}
+      >
+        <View style={[styles.notch, { backgroundColor: theme.colors.outline }]} />
         <View style={styles.phoneScreen}>{children}</View>
         <ChatBotOverlay />
       </View>
@@ -413,6 +485,7 @@ function FlippableOrderCard({
   language: DisplayLanguage;
   onEdit: () => void;
 }) {
+  const theme = useTheme();
   const flipAnim = useRef(new Animated.Value(0)).current;
   const [showVendor, setShowVendor] = useState(false);
 
@@ -439,11 +512,11 @@ function FlippableOrderCard({
     <>
       <View style={styles.topbar}>
         <Pressable onPress={onEdit}>
-          <Text variant="labelMedium" style={styles.backText}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             ‹ {translate(language, "orderCard.editMenu")}
           </Text>
         </Pressable>
-        <Text variant="labelMedium" style={styles.topbarLabel}>
+        <Text variant="labelMedium" style={{ color: theme.colors.onSurface }}>
           {translate(language, "orderCard.topbarLabel")}
         </Text>
         <View style={{ width: 56 }} />
@@ -457,28 +530,54 @@ function FlippableOrderCard({
           <Animated.View
             style={[
               styles.orderCard,
-              { transform: [{ rotate: frontRotate }] },
+              { backgroundColor: theme.colors.primary, transform: [{ rotate: frontRotate }] },
             ]}
           >
-            <Text variant="labelLarge" style={styles.orderKicker}>
+            <Text
+              variant="labelLarge"
+              style={[styles.orderKicker, { color: theme.colors.onPrimary }]}
+            >
               {translate(language, "orderCard.staffLabel")}
             </Text>
-            <Text variant="headlineSmall" style={styles.orderTitle}>
+            <Text
+              variant="headlineSmall"
+              style={[styles.orderTitle, { color: theme.colors.onPrimary }]}
+            >
               {translate(language, "orderCard.title")}
             </Text>
             {lines.map((line) => (
-              <View key={line.id} style={styles.orderLine}>
-                <Text variant="titleMedium" style={styles.orderLineName}>
+              <View
+                key={line.id}
+                style={[styles.orderLine, { borderTopColor: theme.colors.onPrimary }]}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={[styles.orderLineName, { color: theme.colors.onPrimary }]}
+                >
                   {line.nameCustomer}
                 </Text>
-                <Text variant="titleMedium" style={styles.qtyBadge}>
+                <Text
+                  variant="titleMedium"
+                  style={[
+                    styles.qtyBadge,
+                    {
+                      color: theme.colors.onPrimaryContainer,
+                      backgroundColor: theme.colors.primaryContainer,
+                    },
+                  ]}
+                >
                   x{line.quantity}
                 </Text>
               </View>
             ))}
             {lines.some((line) => line.lessSpicy) && (
-              <View style={styles.notePill}>
-                <Text variant="labelMedium" style={styles.noteText}>
+              <View
+                style={[styles.notePill, { backgroundColor: theme.colors.primaryContainer }]}
+              >
+                <Text
+                  variant="labelMedium"
+                  style={{ color: theme.colors.onPrimaryContainer }}
+                >
                   {translate(language, "orderCard.lessSpicyNote")}
                 </Text>
               </View>
@@ -488,30 +587,55 @@ function FlippableOrderCard({
           <Animated.View
             style={[
               styles.orderCard,
-              styles.orderCardBack,
-              { transform: [{ rotate: backRotate }] },
+              { backgroundColor: theme.colors.secondary, transform: [{ rotate: backRotate }] },
             ]}
           >
-            <Text variant="labelLarge" style={styles.orderKicker}>
+            <Text
+              variant="labelLarge"
+              style={[styles.orderKicker, { color: theme.colors.onSecondary }]}
+            >
               TO. 사장님
             </Text>
-            <Text variant="headlineSmall" style={styles.orderTitle}>
+            <Text
+              variant="headlineSmall"
+              style={[styles.orderTitle, { color: theme.colors.onSecondary }]}
+            >
               사장님, 주문할게요!
             </Text>
             {lines.map((line) => (
-              <View key={line.id} style={styles.orderLine}>
-                <Text variant="titleMedium" style={styles.orderLineName}>
+              <View
+                key={line.id}
+                style={[styles.orderLine, { borderTopColor: theme.colors.onSecondary }]}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={[styles.orderLineName, { color: theme.colors.onSecondary }]}
+                >
                   {line.nameKo}
                   {line.lessSpicy ? " 안 맵게" : ""}
                 </Text>
-                <Text variant="titleMedium" style={styles.qtyBadge}>
+                <Text
+                  variant="titleMedium"
+                  style={[
+                    styles.qtyBadge,
+                    {
+                      color: theme.colors.onSecondaryContainer,
+                      backgroundColor: theme.colors.secondaryContainer,
+                    },
+                  ]}
+                >
                   {line.quantity}개
                 </Text>
               </View>
             ))}
             {lines.some((line) => line.lessSpicy) && (
-              <View style={styles.notePill}>
-                <Text variant="labelMedium" style={styles.noteText}>
+              <View
+                style={[styles.notePill, { backgroundColor: theme.colors.secondaryContainer }]}
+              >
+                <Text
+                  variant="labelMedium"
+                  style={{ color: theme.colors.onSecondaryContainer }}
+                >
                   덜 맵게 해주세요.
                 </Text>
               </View>
@@ -519,14 +643,12 @@ function FlippableOrderCard({
           </Animated.View>
         </Pressable>
 
-        <Pressable onPress={flip} style={styles.flipButton}>
-          <Text variant="labelLarge" style={styles.flipButtonText}>
-            {translate(
-              language,
-              showVendor ? "orderCard.flipHide" : "orderCard.flipShow"
-            )}
-          </Text>
-        </Pressable>
+        <AppButton onPress={flip} style={styles.flipButton}>
+          {translate(
+            language,
+            showVendor ? "orderCard.flipHide" : "orderCard.flipShow"
+          )}
+        </AppButton>
 
         <AllergyQuestionCard />
       </ScrollView>
@@ -538,40 +660,31 @@ const styles = StyleSheet.create({
   stage: {
     flex: 1,
     alignItems: "center",
-    backgroundColor: "#0d0a1f",
     paddingHorizontal: 16,
     paddingTop: 28,
   },
-  glowMagenta: {
+  glow: {
     position: "absolute",
+    borderRadius: 120,
+    opacity: 0.16,
+  },
+  glowTopLeft: {
     left: -70,
     top: -40,
     width: 220,
     height: 220,
-    borderRadius: 110,
-    backgroundColor: "rgba(236,0,140,0.18)",
   },
-  glowBlue: {
-    position: "absolute",
+  glowBottomRight: {
     right: -70,
     bottom: -40,
     width: 240,
     height: 240,
-    borderRadius: 120,
-    backgroundColor: "rgba(0,149,217,0.18)",
   },
   brand: {
     alignItems: "center",
     marginBottom: 12,
   },
-  brandTitle: {
-    color: "#EC008C",
-    textShadowColor: "rgba(236,0,140,0.35)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 14,
-  },
   brandSub: {
-    color: "#b9c2c9",
     marginTop: 2,
   },
   modeSwitch: {
@@ -581,20 +694,9 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     borderWidth: 1.4,
-    borderColor: "rgba(255,255,255,0.22)",
     borderRadius: 100,
     paddingHorizontal: 18,
     paddingVertical: 8,
-  },
-  modeActive: {
-    backgroundColor: "#EC008C",
-    borderColor: "#EC008C",
-  },
-  modeText: {
-    color: "#c9d2d8",
-  },
-  modeActiveText: {
-    color: "#1a1030",
   },
   stepper: {
     flexDirection: "row",
@@ -605,14 +707,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.18)",
   },
   dotActive: {
     width: 22,
-    backgroundColor: "#EC008C",
-  },
-  dotDone: {
-    backgroundColor: "rgba(236,0,140,0.55)",
   },
   phone: {
     flex: 1,
@@ -621,9 +718,7 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     maxHeight: 720,
     borderRadius: 46,
-    backgroundColor: "#fbf8ff",
     borderWidth: 10,
-    borderColor: "#06090d",
     overflow: "hidden",
   },
   notch: {
@@ -636,7 +731,6 @@ const styles = StyleSheet.create({
     marginLeft: -60,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    backgroundColor: "#06090d",
   },
   phoneScreen: {
     flex: 1,
@@ -649,19 +743,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  topbarLabel: {
-    color: "#1a1030",
-  },
-  backText: {
-    color: "#8b7fa0",
-  },
   topbarSpacer: {
     width: 56,
-    color: "#8b7fa0",
     textAlign: "right",
   },
   restaurantLabel: {
-    color: "#8b7fa0",
     textAlign: "center",
     paddingHorizontal: 20,
     marginBottom: 4,
@@ -674,9 +760,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 8,
   },
-  sampleChip: {
-    backgroundColor: "#ffffff",
-  },
   resultScroll: {
     flex: 1,
   },
@@ -685,16 +768,8 @@ const styles = StyleSheet.create({
     paddingBottom: 96,
   },
   itemCard: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e4d9f5",
     borderRadius: 16,
-    padding: 14,
     marginBottom: 10,
-  },
-  itemCardSelected: {
-    borderColor: "#58228F",
-    backgroundColor: "#f1eafb",
   },
   itemHead: {
     flexDirection: "row",
@@ -704,48 +779,34 @@ const styles = StyleSheet.create({
   itemNames: {
     flex: 1,
   },
-  itemKo: {
-    color: "#1a1030",
-  },
   itemTranslated: {
-    color: "#0095D9",
     marginTop: 2,
   },
   itemPrice: {
-    color: "#1a1030",
     marginTop: 6,
   },
   spiceBox: {
     alignItems: "flex-end",
     maxWidth: 74,
   },
-  spiceIcon: {
-    color: "#1a1030",
-  },
   spiceLabel: {
-    color: "#8b7fa0",
     marginTop: 2,
   },
   description: {
-    color: "#5a4f3d",
     marginTop: 9,
   },
   howtoBox: {
     marginTop: 10,
     paddingTop: 9,
     borderTopWidth: 1,
-    borderTopColor: "#e4d9f5",
   },
   howtoLabel: {
-    color: "#1a1030",
     marginBottom: 2,
   },
   howtoText: {
-    color: "#5a4f3d",
     lineHeight: 18,
   },
   allergyToggle: {
-    color: "#0095D9",
     marginTop: 9,
   },
   divider: {
@@ -758,28 +819,15 @@ const styles = StyleSheet.create({
   },
   optionPill: {
     borderWidth: 1.4,
-    borderColor: "#e4d9f5",
-    backgroundColor: "#ffffff",
     borderRadius: 100,
     paddingHorizontal: 10,
     paddingVertical: 6,
-  },
-  optionPillOn: {
-    borderColor: "#58228F",
-    backgroundColor: "rgba(88,34,143,0.1)",
-  },
-  optionText: {
-    color: "#8b7fa0",
-  },
-  optionTextOn: {
-    color: "#58228F",
   },
   qtyRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   qtyText: {
-    color: "#1a1030",
     minWidth: 20,
     textAlign: "center",
   },
@@ -792,30 +840,14 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 18,
     borderTopWidth: 1,
-    borderTopColor: "#e4d9f5",
-    backgroundColor: "#ffffff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
   },
-  countText: {
-    color: "#8b7fa0",
-  },
   makeCardButton: {
     flex: 1,
     maxWidth: 210,
-    alignItems: "center",
-    backgroundColor: "#1a1030",
-    borderRadius: 100,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-  },
-  makeCardText: {
-    color: "#EC008C",
-  },
-  disabled: {
-    opacity: 0.35,
   },
   cardScroll: {
     flex: 1,
@@ -833,19 +865,13 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 22,
     padding: 24,
-    backgroundColor: "#EC008C",
     backfaceVisibility: "hidden",
   },
-  orderCardBack: {
-    backgroundColor: "#003795",
-  },
   orderKicker: {
-    color: "#fbf8ff",
     opacity: 0.78,
     letterSpacing: 1,
   },
   orderTitle: {
-    color: "#fbf8ff",
     marginTop: 5,
     marginBottom: 18,
   },
@@ -854,38 +880,24 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.22)",
     paddingVertical: 12,
     gap: 12,
   },
   orderLineName: {
-    color: "#fbf8ff",
     flex: 1,
   },
   qtyBadge: {
-    color: "#fbf8ff",
-    backgroundColor: "rgba(255,255,255,0.22)",
     borderRadius: 100,
     paddingHorizontal: 12,
     paddingVertical: 5,
+    overflow: "hidden",
   },
   notePill: {
     marginTop: 16,
-    backgroundColor: "rgba(255,255,255,0.18)",
     borderRadius: 12,
     padding: 12,
   },
-  noteText: {
-    color: "#fbf8ff",
-  },
   flipButton: {
     marginTop: 16,
-    borderRadius: 100,
-    backgroundColor: "#1a1030",
-    paddingVertical: 15,
-    alignItems: "center",
-  },
-  flipButtonText: {
-    color: "#EC008C",
   },
 });
