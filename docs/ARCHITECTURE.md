@@ -62,75 +62,66 @@ clear the data was fundamentally relational — MySQL became primary. That
 reasoning was sound for the *product* shape; it's overridden now by a cost
 constraint, not because it was wrong.
 
-## Material Design 3 rules (frontend agent must follow)
-- One central theme file (`frontend/src/theme.ts`) defines the M3 color roles
-  (primary/secondary/tertiary/error/surface/... incl. `on-*` and `-container`
-  variants), typography scale, and shape/elevation tokens. Screens consume the
-  theme — they never hardcode colors/fonts.
-- Support light + dark M3 color schemes from day one.
+## Design system: none — pixel-match the sample front (2026-09-19, final, supersedes all M3 history below)
+Owner decision, explicit and final: **drop Material Design 3 entirely.** Not a
+hybrid, not "M3 with custom brand colors" — no `react-native-paper` M3 theme
+system governing look at all. The target look is **`frontendSample/
+busanbite-demo.html`** (the teammate's static HTML demo), matched as closely
+as React Native allows: same colors, same fonts, same shapes (pill buttons,
+card borders/radii, the camera-frame corner brackets, the gradient order
+card, chip styles), same visual hierarchy. Approximate where RN can't do
+something CSS can (e.g. exact `box-shadow` blur) — but the intent is
+pixel-fidelity, not "inspired by."
 
-### Hybrid component approach (2026-09-18, revised) — owner disliked the
-"generic AI-generated app" look of stock `react-native-paper` M3 components
-compared to the teammate demo's crafted custom styling. Compromise, not a
-full departure from M3 (full custom rebuild costs too much re-work given
-what's already built):
-- **Custom-styled** (highest visual footprint, biggest source of the
-  "generic" feel): primary CTA buttons (shutter/analyze/create-card/flip
-  buttons), the order card and scan-result item cards. Build these as
-  plain `View`/`Pressable`-based components — still pull colors/type from
-  `theme.ts` (so they stay on-brand and theme-aware), just not
-  `react-native-paper`'s `Button`/`Card` primitives. Match the demo's shapes
-  (pill buttons, rounded/bordered cards) — see the demo CSS in
-  `docs/PRODUCT.md`'s artifact link for exact values (border-radius, etc.)
-  if precision matters; approximate is fine otherwise.
-- **Keep `react-native-paper`**: `TextInput`, `Snackbar`, `Chip` (allergen/
-  spice chips are already emoji-based, fine as-is), theming plumbing. Low
-  visual footprint, not what reads as "AI-generated," not worth rebuilding.
-- Out of scope for now: replicating the demo's in-app camera viewfinder
-  (corner brackets over a live preview) — that's a real feature (live camera
-  preview via `expo-camera`), not just styling, since the app currently
-  launches the OS system camera via `expo-image-picker`. Revisit as a
-  separate task if wanted later.
+**Scope is NOT the demo's scope** — the demo shows the full product vision
+(먹기 tab enhanced + 말하기 tab + AI 챗봇 FAB). Build the *look* of everything
+the demo shows, but only the *features* already in this app: menu scan →
+result list (currency chips, allergen grid, price) → order card (flip to
+Korean). **Do not build**: the 말하기 tab, the AI 챗봇 floating button/panel,
+or a live in-app camera viewfinder (corner brackets are a static styling
+element on the existing photo-preview box, not a real camera preview feed —
+the app still launches the OS camera via `expo-image-picker`). If the demo's
+markup for a feature we're not building would otherwise leak into a shared
+component, just don't port that piece.
 
-### Brand palette (2026-09-18, superseded same day — see below)
-~~Source: teammate's live demo (yellow/teal/red palette)~~ — **replaced** by
-the owner with official Busan city colors (below) before frontend got far
-into implementation. Typography decision (Song Myung + Noto Sans KR) still
-stands — only the color role assignments changed.
+Concrete tokens from the demo (`frontendSample/busanbite-demo.html`'s
+`:root`), for whoever restyles `theme.ts` and the custom components:
 
-### Brand palette v2 (2026-09-18, current) — Busan city colors
-Owner-specified as CMYK (Y/K assumed 0), converted to hex via standard CMYK→RGB:
+| Token | Hex | Use |
+|---|---|---|
+| `--stage` | `#10161f` | dark scheme background |
+| `--stage-2` | `#161f2b` | dark scheme surface/variant |
+| `--paper` | `#fbf6ec` | light scheme background/surface |
+| `--paper-2` | `#f2ead9` | light scheme surface variant |
+| `--ink` | `#211a12` | text on light/paper surfaces |
+| `--muted` | `#8a7f6b` | secondary/muted text |
+| `--hairline` | `#e4d9c1` | borders/dividers (light) |
+| `--yellow` | `#f4b41a` | primary brand color (buttons, accents) |
+| `--yellow-deep` | `#c98a00` | primary, dark-scheme variant |
+| `--red` | `#c1432e` | error / spicy-level accent |
+| `--teal` | `#2f6f63` | secondary accent (e.g. talk-mode-style cards, English text) |
+| `--white` | `#ffffff` | button/card fills |
 
-| Role (owner's term) | CMYK given | Hex | M3 role |
-|---|---|---|---|
-| 바탕색 (base/identity color) | C90 M30 | `#1AB3FF` | `primary` — main brand color, appears in app bar, primary buttons, selected states, key illustrations |
-| 포인트 색 (accent, used sparingly) | C75 M100 | `#4000FF` | `secondary` — used for emphasis on top of primary (e.g. a CTA that needs to stand out from the primary chrome, selected/active accents) |
+Typography: **'Song Myung'** (serif) for display/headline text (screen
+titles, Korean dish names, the big order-card sentence), **'Noto Sans KR'**
+for everything else — this is what the demo itself uses. This **reverts** the
+2026-09-18 부산체(BusanFont) swap below — confirmed with owner 2026-09-19,
+Song Myung it is. `assets/fonts/BusanFont_Provisional.ttf` is unused now
+(fine to delete or leave).
 
-Notes for whoever implements this:
-- Don't paint entire screen backgrounds `#1AB3FF` despite the name "바탕색" —
-  that reads as a literal wall of saturated cyan and kills text legibility.
-  Keep `background`/`surface` light-scheme near-white and dark-scheme near-
-  black per normal M3 convention; `primary` shows up in components (app bar,
-  buttons, chips, card headers, illustrations), not as full-bleed page fill.
-- Generate the rest of the M3 tonal palette (containers, `on-*` pairs,
-  tertiary, error) from these two seeds using `react-native-paper`'s M3
-  theme tooling / HCT tonal generation rather than hand-picking each one.
-  Error can stay a standard M3 red unless a Busan-specific error color is
-  ever specified — it's a semantic system color, doesn't need to match brand
-  hue.
-- Both seed colors are blue-family (cyan-blue and blue-violet) — should read
-  as a coherent "Busan blue" identity once the M3 tonal ramps are generated,
-  not two clashing hues.
+Component approach: plain `View`/`Pressable`/custom components matching the
+demo's CSS shapes directly (no `react-native-paper` Button/Card governing
+appearance). Keep `react-native-paper` only for pieces with no visual
+footprint worth rebuilding (e.g. `TextInput` if one remains anywhere,
+`Snackbar` for error toasts) — everything visible should look like the demo,
+not like Material.
 
-Typography updated too (2026-09-18): **부산체 (BusanFont)** replaces 'Song
-Myung' for display/headline-level text — owner provided the official font
-file, now at `frontend/assets/fonts/BusanFont_Provisional.ttf`. License:
-Busan Metropolitan City holds the IP and permits free use (video/print/web/
-mobile, no permission process required) — confirmed via the city's official
-distribution. Only one weight exists (`_Provisional`), so it can't carry a
-"bold" variant — use size/color for emphasis instead of a missing bold cut.
-'Noto Sans KR' still handles everything else (body/labels/buttons),
-unchanged.
+### Superseded history (kept for context, do not build against these)
+~~Hybrid M3 + custom buttons/cards (2026-09-18)~~ and ~~Busan city CMYK
+colors as M3 primary/secondary (2026-09-18)~~ — both replaced by the above.
+The Busan-blue palette (`#1AB3FF`/`#4000FF`) and the `AppButton`/`AppCard`
+M3-hybrid components built for it are no longer the target look; restyle or
+replace them to match the demo tokens above instead.
 
 ## Folder ownership
 - `frontend/` — frontend agent only

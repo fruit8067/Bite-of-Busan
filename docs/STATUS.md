@@ -122,6 +122,66 @@ board, not a log. PM reads this before assigning new work.
 따로 유지하는 것보다 지금의 단일 경로가 더 안전하다고 판단했습니다. 에뮬레이터
 확보되면 실제로 확인해서 필요하면 재검토하겠습니다.
 
+- [x] **주문카드 뒤집기 언어 버그 수정** (owner 리포트: "역방향(점원 쪽)일 땐 한국어
+  괜찮은데, 정방향으로 돌아왔을 때 유저 언어로 안 바뀜") — 위에서 미해결로 남겨뒀던
+  "`rotate`(2D)라서 웹에서 뒷면이 겹쳐 보임" 버그가 원인이었음: `backfaceVisibility`는
+  3D 회전(rotateX/Y)에서만 의미가 있는데 Z축 `rotate`를 쓰고 있어서, 뒤에 선언된
+  한국어 카드(`primary` 배경)가 회전 각도와 무관하게 항상 앞 카드(번역된 `secondary`
+  배경) 위를 완전히 덮고 있었음 — 웹뿐 아니라 네이티브에서도 같은 구조적 문제.
+  `FlippableOrderCard`(`src/screens/OrderCardScreen.tsx`)의 앞/뒷면 `transform`을
+  `rotate` → `perspective + rotateY`(진짜 3D 카드 뒤집기)로 교체 — 새 AI 호출 없이
+  이미 갖고 있던 데이터(`line.nameCustomer`=스캔 시 받은 번역, `line.nameKo`)를 그대로
+  사용, 회전 각도에 따라 올바른 면이 보이도록 수정. `npx tsc --noEmit`, `expo export
+  --platform web` 클린. (세션 없어서 PM이 직접 수정 — owner 지시)
+  - **후속 수정**: 브라우저로 직접 뒤집어보니 회전 자체가 애니메이션 없이 순간적으로
+    끝나버림(owner 리포트: "180도 xy 방향으로 돌아가야 되는데 안돌아가네") — 원인은
+    `perspective`를 애니메이션되는 `rotateY`와 같은 `transform` 배열에 섞어 넣어서
+    RN Animated가 보간을 못 하고 최종값으로 바로 점프해버린 것. `perspective`를
+    부모(정적) `flipArea`로 분리하고 자식 `Animated.View`엔 `rotateY`만 남겨서 해결,
+    8초로 늘려서 중간 프레임(옆모습 → 뒤집힘)까지 실제로 캡처해서 검증함.
+
+- [x] **디자인 시스템 M3 완전 폐기 → 샘플과 픽셀 매칭** (`docs/TASKS.md` "Now
+  (2026-09-19, owner 결정 — 최종)" / `docs/ARCHITECTURE.md` "Design system: none",
+  owner가 직접 "task.md 보고 m3 버리고 sample보고 그대로 클론코딩 해" 지시 — 세션
+  없어서 PM이 직접 작업):
+  - `src/theme.ts` — `@material/material-color-utilities`의 HCT 톤 생성 로직 전부
+    제거, `frontendSample/busanbite-demo.html`의 실제 `:root` 값(스테이지 남색/
+    마젠타 `#ec008c`·`#003795`, 청록 `#0095d9`, 레드 `#58228f`, 페이퍼 `#fbf8ff` 등)을
+    그대로 쓰는 플랫 팔레트로 교체. **참고**: `docs/ARCHITECTURE.md`의 토큰 표(금색
+    `#f4b41a`/테라코타 계열)는 실제 샘플 파일과 다른 값이었음(문서가 샘플보다 먼저
+    쓰였거나 갱신이 안 된 것으로 추정) — owner가 "sample보고 그대로"라고 명시했으므로
+    문서 표 대신 `frontendSample/busanbite-demo.html`의 실제 CSS 값을 그대로 따름.
+    ARCHITECTURE.md 토큰 표는 갱신 안 했으니 다음에 문서 작업할 때 실제 파일 기준으로
+    바로잡아주세요.
+  - 폰트: 부산체(`BusanFont_Provisional`) 되돌리고 Song Myung(`@expo-google-fonts/
+    song-myung` 새로 설치) + Noto Sans KR로 복귀. `app/_layout.tsx`의 non-blocking
+    부산체 로딩 로직 제거, Song Myung을 기존 `useFonts` 블로킹 호출에 합침(원래도
+    Noto Sans KR과 같은 Google Font 방식이라 웹에서 멈추는 문제 없음).
+  - `AppButton`에 `variant="dark"`(ink 배경 + yellow 텍스트) 추가 — 데모의
+    make-card-btn/flip-btn과 동일한 톤. Analyze/Create Order Card/flip 버튼에 적용.
+  - `AppCard` 배경을 `surface`(크림톤 paper) 대신 순수 `white`로, radius 8→16 —
+    데모의 `.item-card`와 일치.
+  - `MenuScanScreen`의 스캔 프레임/목업 메뉴판을 데모의 다크 브라운 SVG 목업 색상
+    (`#2a2018`/`#f2ead9`/`#4a3d2c` 등, 데모 자체도 팔레트 토큰이 아닌 하드코딩 값)으로
+    맞춤.
+  - **주문카드 뒤집기 메커니즘 재구현** — 데모의 실제 JS(`renderCardView()` +
+    `classList.toggle('flipped')`)를 보니, 두 면이 각각 다른 배경색인 3D 카드-뒤집기가
+    아니라 **카드 하나**(배경 그라디언트는 항상 노랑→노랑딥 고정)에 대해 내용을
+    버튼 클릭 즉시 스왑하면서 동시에 `rotate(180deg)`(2D, Z축)를 애니메이션시키는
+    구조였음 — "탁자 위에서 휴대폰을 통째로 180도 돌려서 건너편 사람에게 보여주는"
+    실제 제스처를 그대로 시뮬레이션한 것(180도 회전이라 내 쪽에선 뒤집혀 보이지만
+    건너편 사람에겐 똑바로 보임). 기존의 앞/뒤 두 개 `Animated.View` + `rotateY` 3D
+    플립 구조를 버리고 카드 하나 + `expo-linear-gradient`(신규 설치) + `rotate` +
+    내용 즉시 스왑으로 재작성 — 데모와 동일하게 동작 확인(브라우저로 직접 뒤집어서
+    180도 회전 + "TO. 사장님" 뒤집힌 모습까지 스크린샷 캡처).
+  - **범위 제외 확인**: 말하기 탭/AI 챗봇 FAB·패널/실시간 카메라 뷰파인더는
+    `docs/TASKS.md` 지시대로 만들지 않음(`ChatBotOverlay.tsx`는 이전부터 있던 것,
+    이번 스코프에서 손 안 댐 — 여전히 구버전 마젠타/네이비 하드코딩 색).
+  - `npx tsc --noEmit`, `expo export --platform web` 클린. `npx expo start --web`로
+    직접 띄워서 스캔 화면/결과 목록(통화·언어 칩, 알레르기 그리드)/주문카드 뒤집기
+    전부 스크린샷으로 데모와 대조 검증 완료. **미검증**: `expo export --platform
+    android`(시간 관계상 생략) — 다음에 네이티브 쪽 만질 때 한 번 돌려봐 주세요.
+
 ## Backend
 - [x] Express + TypeScript scaffold, `npm install` done, type-checks clean
 - [x] `GET /health` endpoint (checks Redis connectivity) — documented in `docs/API_CONTRACT.md`
